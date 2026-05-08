@@ -18,19 +18,21 @@ def process_grant_application(app_data: GrantApplication):
      logger.debug(f"Application Data: {app_data.json()}")
      
      # Mocking a response for testing
-     sourcify_result = SourcifyAuditResult(
+     raw_sourcify_dict = SourcifyAuditResult(
           wallet=app_data.wallet_address,
           score=0.45,
           verdict="REVIEW",
           breakdown={"complexity": {"score": 0.05, "max": 0.15, "note": "Moderate complexity"}},
           summary=["10 verified contracts", "Moderate complexity", "Clean code"]
      )
-     
-     if sourcify_result.score < 0.3:
+     # automatically convert dict to Pydantic model for better type safety and validation
+     sourcify_result = SourcifyAuditResult(**raw_sourcify_dict)
+
+     if sourcify_result.score < 0.35:
         logger.info("Auto-Reject: Score below 0.3")
         return {"status": "REJECTED"}
         
-     elif sourcify_result.score > 0.7:
+     elif sourcify_result.score > 0.65:
         logger.info("Auto-Approve: Fast-track to Umia Market")
         return {"status": "APPROVED", "next_step": "create_market"}
         

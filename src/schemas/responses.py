@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, List
+from typing import Any, Dict, List
 
 # breakdown criterias
 class CriterionScore(BaseModel):
@@ -14,3 +14,8 @@ class SourcifyAuditResult(BaseModel):
     verdict: str
     breakdown: Dict[str, CriterionScore]
     summary: List[str]
+    # ДОБАВЛЯЕМ ЭТО:
+    raw_data: Dict[str, Any] = Field(
+        default_factory=dict, 
+        description="Keep the original raw response from Sourcify for analysis and future reference."
+    )
