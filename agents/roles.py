@@ -1,31 +1,26 @@
 from crewai import Agent
 from langchain_openai import ChatOpenAI
+from tools.web3_tool import process_venture_application, deploy_umia_market
 from tools.sourcify_tool import ContractSourceTool
-from tools.web3_tool import FutarchyMarketDataTool, FutarchyTradeTool
+from core.config import settings
 
-# Standard: Centralized LLM configuration
-llm = ChatOpenAI(model_name="gpt-4o", temperature=0.0)
+# Instance for all the agents to share
+llm = ChatOpenAI(model_name=settings.CORE_MODEL, temperature=settings.AGENT_TEMPERATURE)
 
-# Agent 1: The ML Oracle (Wraps your teammate's ML model)
-risk_oracle = Agent(
-    role="Quantitative Risk Oracle",
-    goal="Evaluate smart contract upgrades and calculate a definitive 'AI Trust Score' (0-100) representing the probability of success.",
-    backstory="""You are a predictive engine. You rely on the internal Sourcify database 
-    and historical exploit data to predict if a proposed protocol change will succeed.
-    Your output is purely mathematical probabilities, devoid of emotion.""",
-    tools=[ContractSourceTool()],
-    llm=llm,
-    verbose=True
+# Phase 1: Onboarding & Audit Pipeline
+orchestrator = Agent(
+    role="Venture Operations Lead",
+    goal="Onboard new startups by collecting fees and initiating the audit pipeline.",
+    backstory="You are the gatekeeper of the BORG. You ensure only paid and serious applications proceed.",
+    tools=[process_venture_application],
+    llm=llm
 )
 
-# Agent 2: The Autonomous Execution Trader
-quant_trader = Agent(
-    role="Autonomous Treasury Manager",
-    goal="Calculate Expected Value (EV) by comparing the AI Trust Score with Market Probabilities, and execute trades autonomously.",
-    backstory="""You are a highly aggressive, purely logical hedge fund manager operating on Umia's Decision Markets. 
-    You manage the BORG's treasury. You look for inefficiencies where the 'AI Trust Score' differs 
-    significantly from the 'Market Probability'. If you find an edge > 10%, you execute the trade without hesitation.""",
-    tools=[FutarchyMarketDataTool(), FutarchyTradeTool()],
-    llm=llm,
-    verbose=True
+# Phase 1-2: Code Auditor & KPI Architect
+auditor = Agent(
+    role="Security & KPI Architect",
+    goal="Audit the code and define a strict, unbreakable on-chain KPI for the market.",
+    backstory="Senior Solidity Auditor. You turn abstract promises into 'If X gas burned then YES' logic.",
+    tools=[ContractSourceTool(), deploy_umia_market],
+    llm=llm
 )
