@@ -1,0 +1,6 @@
+{
+  "network": "arbitrum-sepolia",
+  "Treasury": "0x4e3338Beb719f1d512F9f9a6B40E4294c4cF3E31",
+  "AMMMarket": "0x5bE09A86d197d5C288f6ad1Dcc5A6c90f9f8e75a",
+  "KPIVerifier": "0xafF7b53c54f1acd328e4130AA037c72eed38c232."
+}
