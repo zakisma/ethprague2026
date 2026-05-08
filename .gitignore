@@ -1,0 +1,75 @@
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
+
+# =========================
+# Secrets / credentials
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+secrets.*
+credentials.*
+private_key*
+mnemonic*
+wallet.json
+
+# =========================
+# IDE / editors
+# =========================
+.idea/
+*.iml
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+*.swp
+*.swo
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Logs / temporary files
+# =========================
+*.log
+logs/
+
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# =========================
+# Python local environment / cache
+# =========================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
