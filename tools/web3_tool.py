@@ -1,5 +1,6 @@
 from langchain.tools import tool
 from pydantic import BaseModel, Field
+from core.config import settings
 
 class FeeStatus(BaseModel):
     success: bool
