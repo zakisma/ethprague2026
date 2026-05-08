@@ -4,8 +4,7 @@ __pycache__/
 node_modules/
 .DS_Store
 
-test_run.py
-sandbox.py
+test/
 
 *.log
 *.py[cod]
