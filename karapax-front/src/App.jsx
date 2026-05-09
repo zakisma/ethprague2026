@@ -7,6 +7,7 @@ import AuditProcess from './components/AuditProcess';
 import AuthButton from './components/AuthButton';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Rocket, ArrowRight, Activity, ShieldCheck, Zap, BarChart3, ShieldAlert } from 'lucide-react';
+import MyProjects from './components/MyProjects';
 
 // Моковые данные: Проекты -> Цели (Milestones)
 const mockProjects = [
@@ -148,6 +149,12 @@ function App() {
           <button onClick={() => setActiveTab('about')} className={`transition ${activeTab === 'about' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
             About
           </button>
+          {/* 🛡️ Кнопка "My Projects" показывается только авторизованным юзерам */}
+          {!!localStorage.getItem('access_token') && (
+            <button onClick={() => setActiveTab('my_projects')} className={`transition font-bold ${activeTab === 'my_projects' ? 'text-emerald-400' : 'text-gray-400 hover:text-white'}`}>
+              My Projects
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -262,7 +269,10 @@ function App() {
         {activeTab === 'audit' && (
           <AuditProcess onComplete={() => setActiveTab('markets')} /> 
         )}
-
+        {/* СТРАНИЦА: МОИ ПРОЕКТЫ */}
+        {activeTab === 'my_projects' && (
+          <MyProjects onGetFunded={() => setActiveTab('create')} />
+        )}
         {/* СТРАНИЦА: ДЕТАЛИ СТАВКИ */}
         {activeTab === 'details' && selectedProject && selectedMilestone && (
           <Details 
