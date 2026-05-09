@@ -1,0 +1,11 @@
+fastapi[standard]
+pydantic-settings
+sqlmodel
+psycopg[binary]
+PyJWT
+siwe
+web3
+httpx
+google-cloud-bigquery
+pandas
+pyarrow
