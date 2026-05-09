@@ -1,3 +1,70 @@
+# ProofFund
+
+ProofFund is the first onchain grant market where capital flows only 
+to developers with verifiable execution history — enforced by AI and 
+governed by prediction markets.
+
+## The Problem No One Has Solved
+
+Every onchain organization funding developers faces the same failure mode: 
+capital goes to strong pitchers, not strong builders.
+
+There is no shared infrastructure for verifiable developer reputation in Web3:
+- GitHub stars can be gamed,
+- hackathon wins are self-reported,
+- wallet addresses carry no portable trust signal,
+- grant committees rely on subjective judgment under time pressure.
+
+The result: misallocated capital, high default rates on funded projects, 
+and no accountability layer for onchain venture formation.
+
+ProofFund is the infrastructure that fixes this at the protocol level.
+
+## What ProofFund Builds
+
+ProofFund is a full-stack agentic grant market with four integrated layers:
+
+### Layer 1 — AI Reputation Audit
+
+Before any developer can enter the funding queue, they must pass a 
+strict AI-driven reputation audit powered by verified onchain contract 
+history from Sourcify's 27M-contract dataset.
+
+The audit evaluates:
+- number and consistency of verified deployments across chains,
+- verification completeness and metadata quality,
+- ABI and documentation coverage,
+- compiler discipline and optimizer usage,
+- source code patterns and security signals,
+- proxy/upgrade patterns and interface complexity,
+- activity span and recency.
+
+The result is a structured, explainable builder score with 
+a machine-readable evidence breakdown — not a black box number, 
+but a transparent underwriting object.
+
+### Layer 2 — Prediction Market Funding Governance
+
+Approved developers submit a milestone proposal and enter a public 
+prediction market. Participants stake on whether the developer will 
+deliver within a 14-day window.
+
+Funding only releases if the market resolves in the developer's favor. 
+This means:
+- grant allocation is a market signal, not a committee opinion,
+- the crowd puts capital at stake to validate developer credibility,
+- misaligned incentives are priced out rather than overruled.
+
+This is futarchic grant governance: the same mechanism Umia uses for 
+strategic decisions applied to developer capital allocation.[web:706]
+
+### Layer 3 — Live ENS Reputation Identity
+
+When a prediction market approves a grant, ProofFund smart contracts 
+automatically mint a unique ENS subdomain to the developer's wallet 
+via the ENS NameWrapper on Sepolia:
+
+
 
 Throughout the 14-day development window, an AI agent continuously 
 monitors onchain metrics and writes live state data directly into the 
