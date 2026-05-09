@@ -1,31 +1,32 @@
 {
-  "final_status": "approved_for_market",
-  "risk_level": "medium",
-  "market_readiness": true,
-  "reasoning": "Mock AI decision: repository and milestone evidence are sufficient for a test market, but the project still has implementation risk.",
+  "final_status": "rejected",
+  "risk_level": "high",
+  "market_readiness": false,
+  "reasoning": "Repository does not contain enough implementation evidence for a Web3 grant audit. The cloned repository appears to contain only README-level documentation or no meaningful code. A prediction market should not be created from claims and milestones alone.",
   "evidence_summary": {
-    "repository_substance": "Real GitHub evidence was collected by github_tool.",
-    "claim_to_code_alignment": "Partially aligned; requires human review.",
-    "web3_relevance": "Milestones define an on-chain transition path.",
-    "developer_credibility": "Sourcify score is moderate and needs review.",
-    "milestone_quality": "Milestones are binary and mostly verifiable.",
-    "grant_amount_justification": "Requested amount is small enough for staged testing."
+    "repository_substance": "Insufficient. No meaningful implementation files detected.",
+    "claim_to_code_alignment": "Cannot be verified because repository lacks implementation.",
+    "web3_relevance": "Not demonstrated in code.",
+    "developer_credibility": "Sourcify score: 0.42.",
+    "milestone_quality": "medium",
+    "grant_amount_justification": "Not justified without implementation evidence."
   },
   "risk_scores": {
-    "repository_substance": 0.62,
-    "claim_to_code_alignment": 0.58,
-    "web3_relevance": 0.64,
+    "repository_substance": 0.0,
+    "claim_to_code_alignment": 0.0,
+    "web3_relevance": 0.0,
     "developer_credibility": 0.42,
-    "milestone_quality": 0.72,
-    "grant_amount_justification": 0.7,
-    "kpi_measurability": 0.78
+    "milestone_quality": 0.3,
+    "grant_amount_justification": 0.1,
+    "kpi_measurability": 0.4
   },
   "main_risks": [
-    "Wallet reputation is moderate, not strong.",
-    "GitHub-to-Web3 alignment should be manually checked before production market creation."
+    "Repository contains no meaningful implementation evidence.",
+    "Web3 functionality is not demonstrated in code.",
+    "Milestones cannot compensate for an empty or README-only repository."
   ],
-  "recommended_market_question": "Will Buk Reservation System deploy a verified Sepolia smart contract and reach at least 50 unique wallet interactions by 2026-08-01?",
-  "recommended_kpi": "YES if by 2026-08-01 a verified Sepolia contract linked to the project exists and at least 50 unique externally owned wallet addresses have interacted with it.",
+  "recommended_market_question": null,
+  "recommended_kpi": null,
   "milestone_assessments": [
     {
       "title": "MVP Contract Deployment",
@@ -54,40 +55,18 @@
       "rejection_reason": null
     }
   ],
-  "confidence": 0.69,
+  "confidence": 0.95,
   "contract_execution_plan": {
-    "should_create_market": true,
-    "contract_action": "create_market",
-    "market_creation_params": {
-      "projectName": "Buk Reservation System",
-      "marketDescription": "Will Buk Reservation System deploy a verified Sepolia smart contract and reach at least 50 unique wallet interactions by 2026-08-01?",
-      "developer": "0x41653c7d61609D856f29355E404F310Ec4142Cfb",
-      "feeTarget": "0",
-      "twlTarget": "0",
-      "wDeploy": 55,
-      "wFees": 0,
-      "wTwl": 0,
-      "wCallers": 35,
-      "wLiveness": 10
-    },
-    "kpi_verifier_config": {
-      "durationBlocks": 100800,
-      "snapshotInterval": 450,
-      "callerTarget": 0,
-      "minCallerBalance": "0",
-      "maxMissedPings": 2,
-      "grantContract": "0x0000000000000000000000000000000000000000"
-    },
-    "tranche_plan": {
-      "tranche1Amount": "2500",
-      "tranche2Amount": "2500",
-      "currency": "PROJECT_UNIT_NOT_WEI"
-    },
-    "notes": "Backend can call GrantFactory.createMarket with market_creation_params."
+    "should_create_market": false,
+    "contract_action": "none",
+    "market_creation_params": null,
+    "kpi_verifier_config": null,
+    "tranche_plan": null,
+    "notes": "Rejected by deterministic repository substance gate before market creation."
   },
   "github_meta": {
     "stars": 0,
-    "last_push_days": 999,
+    "last_push_days": 19,
     "detected_stack": [],
     "has_smart_contracts": false
   },

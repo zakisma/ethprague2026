@@ -9,3 +9,4 @@ test/
 *.log
 *.py[cod]
 .github
+simulation_output/deep_audit_result.json
