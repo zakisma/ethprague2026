@@ -2,25 +2,72 @@ import logging
 import json
 
 from src.tools.github_tool import analyze_github_repo
-from src.services.milestone_agent import analyze_milestones
+from agents.milestone_kpi_agent import analyze_milestones
 from src.services.gemini_client import generate_json_with_fallback
 
 logger = logging.getLogger(__name__)
 
 
 def run_rejection_analysis_sync(app_data, reputation):
+    """
+    Lightweight AI-style rejection report.
+    Does not analyze GitHub or milestones.
+    Used only when Sourcify verdict is REJECTED.
+    """
+
     return {
+        "final_status": "rejected_by_reputation",
+        "market_readiness": False,
         "decision": "REJECTED",
-        "reason": "Low on-chain reputation",
-        "sourcify_score": reputation.score
+        "reason": "The applicant wallet did not pass the Sourcify reputation check.",
+        "sourcify_verdict": reputation.verdict,
+        "sourcify_score": reputation.score,
+        "summary": getattr(reputation, "summary", []),
+        "feedback": [
+            "Verify and publish more smart contracts through Sourcify.",
+            "Improve contract documentation and metadata quality.",
+            "Build a longer on-chain activity history connected to the applicant wallet.",
+            "Submit again once the wallet has stronger verified deployment evidence."
+        ],
+        "contract_execution_plan": {
+            "should_create_market": False,
+            "contract_action": "none",
+            "market_creation_params": None,
+            "kpi_verifier_config": None,
+            "tranche_plan": None,
+            "notes": "Rejected before repository analysis because the wallet reputation verdict was REJECTED."
+        }
     }
 
 
-def run_star_profiler_sync(app_data, reputation):
+def run_trust_profile_sync(app_data, reputation):
+    """
+    Lightweight positive trust report.
+    Does not analyze GitHub or milestones.
+    Used only when Sourcify verdict is APPROVED.
+    """
+
     return {
+        "final_status": "approved_by_reputation",
+        "market_readiness": True,
         "decision": "APPROVED",
-        "reason": "Strong on-chain reputation",
-        "sourcify_score": reputation.score
+        "reason": "The applicant wallet has strong Sourcify-backed on-chain reputation.",
+        "sourcify_verdict": reputation.verdict,
+        "sourcify_score": reputation.score,
+        "summary": getattr(reputation, "summary", []),
+        "trust_profile": {
+            "developer_credibility": "Strong on-chain reputation based on verified contract history.",
+            "why_we_trust_this_applicant": getattr(reputation, "summary", []),
+            "recommended_next_step": "Proceed to grant/market setup or optional project-level audit."
+        },
+        "contract_execution_plan": {
+            "should_create_market": False,
+            "contract_action": "none",
+            "market_creation_params": None,
+            "kpi_verifier_config": None,
+            "tranche_plan": None,
+            "notes": "Wallet reputation is approved. Market creation can be handled by a later project/KPI setup step."
+        }
     }
 
 

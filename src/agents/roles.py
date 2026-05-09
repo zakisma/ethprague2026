@@ -1,7 +1,18 @@
+"""
+Legacy CrewAI agent definitions.
+
+Currently not used in the MVP pipeline.
+The active AI flow is implemented through:
+- src/services/deep_audit.py
+- src/services/milestone_agent.py
+- src/services/gemini_client.py
+
+Keep this file only as a future reference if the project returns to CrewAI orchestration.
+"""
 from crewai import Agent
 from langchain_google_genai import ChatGoogleGenerativeAI
 from src.tools.sourcify_tool import fetch_developer_reputation
-from src.tools.web3_tool import verify_app_fee, deploy_umia_market
+from tools.mock_umia_tool import verify_app_fee, deploy_umia_market
 from src.core.config import settings
 
 # Initialize Google Gemini Models

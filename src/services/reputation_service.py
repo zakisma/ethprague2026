@@ -8,7 +8,7 @@ def fetch_and_map_reputation(wallet_address: str) -> SourcifyAuditResult:
 
     raw_data = audit_developer(wallet_address, verbose=False)
     
-    # Мок (временно)
+    # Мок (временно) # 
 #     raw_data = {
 #      "wallet": wallet_address,
 #      "score": 0.45,

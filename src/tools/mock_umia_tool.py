@@ -1,3 +1,5 @@
+# TODO: replace mock with real Web3 provider / contract call
+
 import logging
 from langchain.tools import tool
 from pydantic import BaseModel, Field
