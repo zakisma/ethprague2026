@@ -8,3 +8,4 @@ test/
 
 *.log
 *.py[cod]
+.github

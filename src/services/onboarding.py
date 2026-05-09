@@ -1,47 +1,60 @@
 import logging
-from src.schemas.requests import GrantApplication
-from src.schemas.responses import SourcifyAuditResult
+from typing import Any, Dict, List, Optional
 
-# from pharukh.sourcify import output # Hypothetical import for the Sourcify tool
+from src.schemas.requests import GrantApplication
+from src.schemas.responses import OrchestratorResponse
+from src.core.config import settings
+from src.services.reputation_service import fetch_and_map_reputation
+
+# Import our synchronous worker functions from the new file
+from src.services.deep_audit import (
+    run_rejection_analysis_sync,
+    run_star_profiler_sync,
+    run_deep_audit
+)
 
 logger = logging.getLogger(__name__)
 
-def process_grant_application(app_data: GrantApplication):
-     """
-     Main function to process incoming grant applications.
-     This is where the VentureApplicationEngine would be invoked.
-     """
-     logger.info(f"Received grant application from {app_data.wallet_address}")
-     
-     # Here we would instantiate and run the VentureApplicationEngine
-     # For demonstration, we'll just log the received data
-     logger.debug(f"Application Data: {app_data.json()}")
-     
-     # Mocking a response for testing
-     raw_sourcify_dict = SourcifyAuditResult(
-          wallet=app_data.wallet_address,
-          score=0.45,
-          verdict="REVIEW",
-          breakdown={"complexity": {"score": 0.05, "max": 0.15, "note": "Moderate complexity"}},
-          summary=["10 verified contracts", "Moderate complexity", "Clean code"]
-     )
-     # automatically convert dict to Pydantic model for better type safety and validation
-     sourcify_result = SourcifyAuditResult(**raw_sourcify_dict)
-
-     if sourcify_result.score < 0.35:
-        logger.info("Auto-Reject: Score below 0.3")
-        return {"status": "REJECTED"}
+def process_grant_application(app_data: GrantApplication) -> OrchestratorResponse:
+    """
+    Production-ready Analytical Orchestrator (Synchronous).
+    Responsibility: Pure routing and task delegation.
+    """
+    logger.info(f"Processing application for {app_data.applicant_wallet_address}")
+    
+    # 1. Fetch and validate data (SRP fulfilled)
+    reputation = fetch_and_map_reputation(app_data.applicant_wallet_address)
+    
+    # 2. Config-based routing (No magic numbers)
+    if reputation.score < settings.AUTO_REJECT_THRESHOLD:
+        logger.info("Routing -> Agent-Roaster (Sync)")
+        report = run_rejection_analysis_sync(app_data, reputation)
         
-     elif sourcify_result.score > 0.65:
-        logger.info("Auto-Approve: Fast-track to Umia Market")
-        return {"status": "APPROVED", "next_step": "create_market"}
+        return OrchestratorResponse(
+            status="wallet_check_failed",
+            message="Auto-rejected based on low on-chain reputation.",
+            ai_audit_data=report
+        )
         
-     else:
-        logger.info(f"Score is {sourcify_result.score}. Initiating Deep Audit on GitHub: {app_data.github_url}")
-        # Agent №2 call
-        # Giving app_data and sourcify_result
-        return run_deep_audit(app_data, sourcify_result)
+    elif reputation.score >= settings.AUTO_APPROVE_THRESHOLD:
+       logger.info("Routing -> Deep GitHub Audit despite strong reputation")
+       ai_report = run_deep_audit(app_data, reputation)
 
-def run_deep_audit(app_data: GrantApplication, sourcify_data: SourcifyAuditResult):
-    # Agent №2 call
-    pass
+       return OrchestratorResponse(
+         status=ai_report.get("final_status", "project_ai_review_running"),
+         message="Deep audit finished.",
+         ai_audit_data=ai_report
+    )
+        
+    else:
+        logger.info("Routing -> Deep GitHub Audit (SYNC)")
+        
+        # Call the function synchronously. The backend will keep the connection open.
+        ai_report = run_deep_audit(app_data, reputation)
+        
+        # Return the final status decided by the AI
+        return OrchestratorResponse(
+            status=ai_report.get("final_status", "project_ai_review_running"),
+            message="Deep audit finished.",
+            ai_audit_data=ai_report
+        )

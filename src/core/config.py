@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     AGENT_TEMPERATURE: float = 0.1
     APP_FEE_ETH: float = 0.01
 
+    AUTO_REJECT_THRESHOLD: float = 0.35
+    AUTO_APPROVE_THRESHOLD: float = 0.65
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 settings = Settings()
