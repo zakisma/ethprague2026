@@ -8,6 +8,16 @@ from src.services.project_service import ProjectOwnerNotFoundException
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
+@router.get("", response_model=list[ProjectOut])
+async def get_all_projects(session: SessionDep, _: CurrentUserIdDep):
+    return project_service.get_all_projects(session)
+
+
+@router.get("/me", response_model=list[ProjectOut])
+async def get_my_projects(user_id: CurrentUserIdDep, session: SessionDep):
+    return project_service.get_projects_by_user_id(session, user_id)
+
+
 @router.post("", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
 async def create_project(
     body: ProjectCreate,

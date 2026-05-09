@@ -20,6 +20,24 @@ class ProjectOwnerNotFoundException(Exception):
         self.user_id = user_id
 
 
+def get_all_projects(session: Session) -> list[Project]:
+    statement = select(Project).order_by(Project.created_at.desc())
+    projects = list(session.exec(statement).all())
+    _attach_milestones(session, projects)
+    return projects
+
+
+def get_projects_by_user_id(session: Session, user_id: int) -> list[Project]:
+    statement = (
+        select(Project)
+        .where(Project.user_id == user_id)
+        .order_by(Project.created_at.desc())
+    )
+    projects = list(session.exec(statement).all())
+    _attach_milestones(session, projects)
+    return projects
+
+
 def create_project(session: Session, user_id: int, data: ProjectCreate) -> Project:
     user = session.get(User, user_id)
     if user is None:
@@ -46,6 +64,28 @@ def create_project(session: Session, user_id: int, data: ProjectCreate) -> Proje
         session.exec(select(Milestone).where(Milestone.project_id == project.id)).all()
     )
     return project
+
+
+def _attach_milestones(session: Session, projects: list[Project]) -> None:
+    if not projects:
+        return
+
+    project_ids = [project.id for project in projects if project.id is not None]
+    if not project_ids:
+        return
+
+    statement = select(Milestone).where(Milestone.project_id.in_(project_ids))
+    milestones = list(session.exec(statement).all())
+
+    milestones_by_project: dict[int, list[Milestone]] = {}
+    for milestone in milestones:
+        milestones_by_project.setdefault(milestone.project_id, []).append(milestone)
+
+    for project in projects:
+        if project.id is None:
+            project.milestones = []
+            continue
+        project.milestones = milestones_by_project.get(project.id, [])
 
 
 def audit_project_in_background(project_id: int, user_id: int) -> None:
@@ -76,7 +116,7 @@ def _get_wallet_address(user_id: int) -> str | None:
 
 def _fetch_audit_payload(wallet_address: str) -> dict[str, Any]:
     encoded_wallet = quote(wallet_address, safe="")
-    url = f"{settings.DATA_AI_URI.rstrip('/')}/test/audit/{encoded_wallet}"
+    url = f"{settings.DATA_AI_URI.rstrip('/')}/audit/{encoded_wallet}"
     with httpx.Client(timeout=30.0) as client:
         response = client.get(url)
         response.raise_for_status()
