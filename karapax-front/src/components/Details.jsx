@@ -9,9 +9,10 @@ export default function Details({ project, milestone, onBack }) {
   const [poolYes, setPoolYes] = useState(milestone.yesPool);
   const [poolNo, setPoolNo] = useState(milestone.noPool);
   
-  // Добавим стейт для отображения баланса пользователя (для красоты)
-  const [userSharesYes, setUserSharesYes] = useState(0);
-  const [userSharesNo, setUserSharesNo] = useState(0);
+  // 🥷 ХАКАФОННЫЙ ТРЮК #2: Берем баланс юзера тоже из объекта milestone!
+  // Если там пусто (еще не покупали), ставим 0.
+  const [userSharesYes, setUserSharesYes] = useState(milestone.userSharesYes || 0);
+  const [userSharesNo, setUserSharesNo] = useState(milestone.userSharesNo || 0);
 
   // Фейковые состояния для симуляции транзакции
   const [isPending, setIsPending] = useState(false);
@@ -75,14 +76,26 @@ export default function Details({ project, milestone, onBack }) {
         if (selectedToken === 'YES') {
           const newYes = poolYes + investment;
           setPoolYes(newYes);
-          setUserSharesYes(prev => prev + expectedShares);
+          
+          setUserSharesYes(prev => {
+            const newShares = prev + expectedShares;
+            // 🥷 СОХРАНЯЕМ ПОЗИЦИЮ В ОБЪЕКТ НАВСЕГДА
+            milestone.userSharesYes = newShares; 
+            return newShares;
+          });
           
           // 🥷 СИНХРОНИЗАЦИЯ С ГЛАВНОЙ СТРАНИЦЕЙ
           milestone.yesPool = newYes;
         } else {
           const newNo = poolNo + investment;
           setPoolNo(newNo);
-          setUserSharesNo(prev => prev + expectedShares);
+          
+          setUserSharesNo(prev => {
+            const newShares = prev + expectedShares;
+            // 🥷 СОХРАНЯЕМ ПОЗИЦИЮ В ОБЪЕКТ НАВСЕГДА
+            milestone.userSharesNo = newShares; 
+            return newShares;
+          });
 
           // 🥷 СИНХРОНИЗАЦИЯ С ГЛАВНОЙ СТРАНИЦЕЙ
           milestone.noPool = newNo;

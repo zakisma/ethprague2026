@@ -1,261 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Zap, ShieldCheck, Target, ExternalLink, Loader2 } from 'lucide-react';
+import React from 'react';
+import { ExternalLink, Target, ShieldCheck, ChevronRight } from 'lucide-react';
 
-export default function Details({ project, milestone, onBack }) {
-  const [betAmount, setBetAmount] = useState('');
-  const [selectedToken, setSelectedToken] = useState('YES');
+export default function ProjectBlock({ project, onOpenMilestone }) {
+  return (
+    <div className="bg-[#111827] border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-colors duration-300 flex flex-col">
+      {/* Шапка проекта */}
+      <div className="p-6 border-b border-gray-800 bg-gradient-to-b from-gray-800/40 to-transparent">
+        <div className="flex justify-between items-start mb-2">
+          <h2 className="text-2xl font-black text-white">{project.name}</h2>
+          <span className="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-md border border-emerald-500/20 font-bold flex items-center gap-1">
+            <ShieldCheck size={14} /> {project.reputation} Tier
+          </span>
+        </div>
+        <a 
+          href={project.website} 
+          target="_blank" 
+          rel="noreferrer"
+          className="text-sm text-gray-400 hover:text-emerald-400 flex items-center gap-1 w-fit transition"
+        >
+          {project.website.replace('https://', '')} <ExternalLink size={12} />
+        </a>
+        <p className="text-gray-400 text-sm mt-4 leading-relaxed">
+          {project.description}
+        </p>
+      </div>
 
-  // 1. ХРАНИМ СОСТОЯНИЕ ПУЛОВ В REACT (изначально берем из моков)
-  const [poolYes, setPoolYes] = useState(milestone.yesPool);
-  const [poolNo, setPoolNo] = useState(milestone.noPool);
-  
-  // Добавим стейт для отображения баланса пользователя (для красоты)
-  const [userSharesYes, setUserSharesYes] = useState(0);
-  const [userSharesNo, setUserSharesNo] = useState(0);
-
-  // Фейковые состояния для симуляции транзакции
-  const [isPending, setIsPending] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-
-  // --- FIXED PREDICTION MARKET MATH ---
-  // Price represents market probability (0.00 to 1.00)
-  const currentPriceYes = poolYes / (poolYes + poolNo);
-  const currentPriceNo = poolNo / (poolYes + poolNo);
-  
-  // Potential Return Multiplier (Odds) = 1 / Price
-  const yesOdds = (1 / currentPriceYes).toFixed(2);
-  const noOdds = (1 / currentPriceNo).toFixed(2);
-
-  let potentialPayout = "0.00";
-  let protocolFee = "0.00";
-  let expectedShares = 0;
-
-  const amountIn = Number(betAmount) || 0;
-
-  if (amountIn > 0) {
-    // Комиссия 0.1% (как в Solidity: FEE_PERCENT / 1000)
-    const fee = amountIn * 0.001;
-    protocolFee = fee.toFixed(4);
-    const investment = amountIn - fee;
-
-    // Simulate Slippage: Average execution price as the pool shifts
-    if (selectedToken === 'YES') {
-      const endPrice = (poolYes + investment) / (poolYes + investment + poolNo);
-      const avgPrice = (currentPriceYes + endPrice) / 2;
-      expectedShares = investment / avgPrice;
-    } else {
-      const endPrice = (poolNo + investment) / (poolNo + investment + poolYes);
-      const avgPrice = (currentPriceNo + endPrice) / 2;
-      expectedShares = investment / avgPrice;
-    }
-
-    potentialPayout = expectedShares.toFixed(4);
-  }
-
-  // 3. СИМУЛЯЦИЯ ПОКУПКИ (С ИЗМЕНЕНИЕМ КОЭФФИЦИЕНТОВ)
-  const handleBuy = () => {
-    if (amountIn <= 0) return;
-
-    setIsConfirmed(false);
-    setIsPending(true); // "Ждем подписи в кошельке"
-
-    // Имитируем, что юзер подписывает транзакцию 1.5 секунды
-    setTimeout(() => {
-      setIsPending(false);
-      setIsConfirming(true); // "Транзакция летит в блокчейн"
-
-      // Имитируем майнинг блока 2.5 секунды
-      setTimeout(() => {
+      {/* Список целей из Roadmap */}
+      <div className="p-4 flex-grow space-y-3 bg-[#0d131f]">
+        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-2 mb-3 flex items-center gap-1">
+          <Target size={14} /> Active Roadmap Goals
+        </h3>
         
-        // --- ОБНОВЛЯЕМ ПУЛЫ ---
-        const fee = amountIn * 0.001;
-        const investment = amountIn - fee;
-
-        if (selectedToken === 'YES') {
-          const newYes = poolYes + investment;
-          setPoolYes(newYes);
-          setUserSharesYes(prev => prev + expectedShares);
+        {project.milestones.map((milestone) => {
+          // Динамическая математика, которая подхватит изменения из Details.jsx
+          const poolYes = milestone.yesPool;
+          const poolNo = milestone.noPool;
+          const totalPool = poolYes + poolNo;
           
-          // 🥷 СИНХРОНИЗАЦИЯ С ГЛАВНОЙ СТРАНИЦЕЙ
-          milestone.yesPool = newYes;
-        } else {
-          const newNo = poolNo + investment;
-          setPoolNo(newNo);
-          setUserSharesNo(prev => prev + expectedShares);
+          const yesPercent = totalPool > 0 ? Math.round((poolYes / totalPool) * 100) : 50;
+          const noPercent = 100 - yesPercent;
 
-          // 🥷 СИНХРОНИЗАЦИЯ С ГЛАВНОЙ СТРАНИЦЕЙ
-          milestone.noPool = newNo;
-        }
-        // ------------------------------------------
+          const yesOdds = (totalPool / poolNo).toFixed(2); 
+          const noOdds = (totalPool / poolYes).toFixed(2);
 
-        setIsConfirming(false);
-        setIsConfirmed(true); // Успех!
-        setBetAmount(''); // Очищаем поле ввода
-        
-        // Убираем плашку успеха через 5 секунд
-        setTimeout(() => setIsConfirmed(false), 5000);
-      }, 2500);
-    }, 1500);
-  };
-
-  return (
-    <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-left-4 duration-500">
-      <button onClick={onBack} className="flex items-center gap-2 text-gray-400 hover:text-white transition mb-6 group cursor-pointer">
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to Markets
-      </button>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ЛЕВАЯ КОЛОНКА */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#111827] border border-gray-800 rounded-3xl p-8">
-            <div className="flex items-center gap-2 text-gray-400 mb-4 text-sm font-bold uppercase tracking-wider">
-              <img src={`https://api.dicebear.com/7.x/shapes/svg?seed=${project.name}`} alt="logo" className="w-6 h-6 rounded-md opacity-80" />
-              {project.name} <ChevronRightIcon /> Roadmap Milestone
-            </div>
-            
-            <h1 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
-              {milestone.title}
-            </h1>
-            
-            <div className="flex flex-wrap gap-4 items-center text-gray-400 text-sm mb-6">
-              <span className="flex items-center gap-1 text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1 rounded-full">
-                <ShieldCheck size={16} /> AI Verified
-              </span>
-              <a href={project.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition">
-                <ExternalLink size={14} /> Official Site
-              </a>
-              <span>•</span>
-              <span className="text-amber-400 font-mono">Deadline: {milestone.deadline}</span>
-            </div>
-
-            {/* Блок с динамикой пула (чтобы жюри видело изменения) */}
-            <div className="mt-8 p-4 bg-black/40 border border-gray-800 rounded-xl grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Current YES Pool</p>
-                <p className="text-lg font-mono text-emerald-400">{poolYes.toFixed(2)} ETH</p>
+          return (
+            <div 
+              key={milestone.id}
+              onClick={() => onOpenMilestone(project, milestone)}
+              className="bg-[#151e2e] border border-gray-800 rounded-xl p-4 cursor-pointer hover:border-emerald-500/40 hover:bg-[#1a2436] transition group"
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold text-white text-sm group-hover:text-emerald-400 transition pr-4">
+                  {milestone.title}
+                </h4>
+                <ChevronRight size={16} className="text-gray-600 group-hover:text-emerald-400 transition shrink-0" />
               </div>
-              <div>
-                <p className="text-xs text-gray-500 font-bold uppercase mb-1">Current NO Pool</p>
-                <p className="text-lg font-mono text-rose-400">{poolNo.toFixed(2)} ETH</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#111827] border border-gray-800 rounded-3xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Zap className="text-emerald-400" /> On-chain Verification Rules
-            </h2>
-            <p className="text-gray-400 mb-6 text-sm">
-              If the developer completes this milestone, the AI Agent will verify the following criteria via RPC before resolving the market.
-            </p>
-            <div className="space-y-3">
-              <KpiRow id="1" name="Verified Mainnet Deploy" desc="Sourcify API — bytecode match. Binary: Yes/No." />
-              <KpiRow id="2" name="Protocol Fees → Treasury" desc="balanceOf(immutableTreasuryAddress) must increase." />
-              <KpiRow id="3" name="Time-weighted ETH locked" desc="Snapshots totalLocked over 14 days to prevent Flash Loans." />
-            </div>
-          </div>
-        </div>
-
-        {/* ПРАВАЯ КОЛОНКА (Виджет ставки) */}
-        <div className="space-y-6">
-          <div className="bg-[#111827] border-2 border-emerald-500/20 rounded-3xl p-6 sticky top-24">
-            
-            {/* Показываем купленные акции юзера, если есть */}
-            {(userSharesYes > 0 || userSharesNo > 0) && (
-              <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
-                <p className="text-xs text-emerald-400 font-bold uppercase mb-2">Your Position</p>
-                {userSharesYes > 0 && <p className="text-sm text-white font-mono">{userSharesYes.toFixed(2)} tYES</p>}
-                {userSharesNo > 0 && <p className="text-sm text-white font-mono">{userSharesNo.toFixed(2)} tNO</p>}
-              </div>
-            )}
-
-            <h3 className="text-xl font-bold text-white mb-6">Stake on Outcome</h3>
-            
-            <div className="flex p-1 bg-black/40 rounded-xl mb-6">
-              <button 
-                onClick={() => setSelectedToken('YES')}
-                className={`flex-1 py-3 rounded-lg font-bold transition cursor-pointer ${selectedToken === 'YES' ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-gray-500 hover:text-white'}`}
-              >
-                Buy tYES <span className="text-xs block opacity-70">Odds: x{yesOdds}</span>
-              </button>
-              <button 
-                onClick={() => setSelectedToken('NO')}
-                className={`flex-1 py-3 rounded-lg font-bold transition cursor-pointer ${selectedToken === 'NO' ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 'text-gray-500 hover:text-white'}`}
-              >
-                Buy tNO <span className="text-xs block opacity-70">Odds: x{noOdds}</span>
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs text-gray-500 uppercase font-bold ml-1">Investment Amount</label>
-                <div className="relative mt-2">
-                  <input 
-                    type="number" 
-                    placeholder="0.0"
-                    value={betAmount}
-                    onChange={(e) => setBetAmount(e.target.value)}
-                    className="w-full bg-[#0a0f1c] border border-gray-800 rounded-xl py-4 px-4 text-white font-mono focus:border-emerald-500 outline-none transition"
-                  />
-                  <span className="absolute right-4 top-4 text-gray-500 font-bold">ETH</span>
+              
+              {/* Прогресс-бар */}
+              <div className="flex items-center gap-3">
+                <div className="flex-grow h-1.5 bg-gray-800 rounded-full overflow-hidden flex">
+                  <div className="bg-emerald-500 h-full transition-all duration-700" style={{ width: `${yesPercent}%` }}></div>
+                  <div className="bg-rose-500 h-full transition-all duration-700" style={{ width: `${noPercent}%` }}></div>
+                </div>
+                <div className="text-xs font-mono text-gray-400 whitespace-nowrap">
+                  Pool: {totalPool.toFixed(2)} ETH
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-800/30 rounded-xl border border-gray-800 space-y-3 text-sm">
-                <div className="flex justify-between text-gray-500">
-                  <span>Protocol Fee (0.1%):</span>
-                  <span className="font-mono">{protocolFee} ETH</span>
-                </div>
-
-                <div className="flex justify-between items-center border-t border-gray-800 pt-3 text-gray-400">
-                  <span>Est. Payout:</span>
-                  <div className="flex items-center gap-2">
-                    {/* Крутилка крутится, пока идет транзакция */}
-                    {(isPending || isConfirming) && <Loader2 size={14} className="animate-spin text-emerald-500" />}
-                    <span className={`font-bold font-mono text-lg ${selectedToken === 'YES' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {potentialPayout} <span className="text-xs">shares</span>
-                    </span>
-                  </div>
-                </div>
+              {/* Проценты и кэфы */}
+              <div className="flex justify-between text-[10px] font-bold mt-2">
+                <span className="text-emerald-500 flex gap-2">
+                  <span>YES {yesPercent}%</span>
+                  <span className="opacity-60">x{yesOdds}</span>
+                </span>
+                <span className="text-rose-500 flex gap-2">
+                  <span className="opacity-60">x{noOdds}</span>
+                  <span>NO {noPercent}%</span>
+                </span>
               </div>
-
-              <button 
-                onClick={handleBuy}
-                disabled={isPending || isConfirming || amountIn <= 0}
-                className={`w-full text-black font-black py-4 rounded-xl transition transform active:scale-95 shadow-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${selectedToken === 'YES' ? 'bg-emerald-400 hover:bg-emerald-300' : 'bg-rose-400 hover:bg-rose-300'}`}
-              >
-                {isPending ? 'CONFIRM IN WALLET...' : isConfirming ? 'MINING...' : 'CONFIRM TRANSACTION'}
-              </button>
-
-              {/* Сообщение об успехе */}
-              {isConfirmed && (
-                <div className="text-center text-sm font-bold text-emerald-400 mt-2 animate-in fade-in zoom-in duration-300">
-                  🎉 Transaction Successful! Odds Updated.
-                </div>
-              )}
             </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-function ChevronRightIcon() {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><path d="m9 18 6-6-6-6"/></svg>;
-}
-
-function KpiRow({ id, name, desc }) {
-  return (
-    <div className="p-4 border border-gray-800 rounded-xl flex gap-4 items-start">
-      <div className="bg-gray-800 text-gray-400 w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 font-mono">
-        {id}
-      </div>
-      <div>
-        <h4 className="font-bold text-white text-sm">{name}</h4>
-        <p className="text-sm text-gray-400 mt-1">{desc}</p>
+          );
+        })}
       </div>
     </div>
   );
