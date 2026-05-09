@@ -37,54 +37,25 @@ export default function CreateProject({ onProjectCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Проверяем токен перед отправкой
+    // Проверяем токен перед отправкой (оставляем для реалистичности флоу)
     const token = localStorage.getItem('access_token');
     if (!token) {
       alert("Error: You must verify your identity first!");
       return;
     }
 
-    // Собираем payload строго по схеме из FastAPI
-    const payload = {
-      title: formData.name,
-      website_url: formData.website,
-      github_repository: formData.github,
-      description: formData.description,
-      milestones: milestones.map(m => ({
-        title: m.title,
-        deadline: m.deadline,
-        funding_needed_proof: Number(m.fundingAmount) || 0,
-        description: m.desc
-      }))
-    };
-
     setIsSubmitting(true);
 
-    try {
-      const response = await fetch('http://192.168.11.198:8000/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Передаем токен
-        },
-        body: JSON.stringify(payload)
+    // СИМУЛЯЦИЯ: Имитируем запрос на бэкенд и работу AI-аудита
+    setTimeout(() => {
+      console.log("Simulated API Success! Data would have been:", {
+        ...formData,
+        milestones
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
-        throw new Error(JSON.stringify(errorData.detail || "Failed to create project"));
-      }
-
-      console.log("Successfully submitted to FastAPI!");
-      onProjectCreated(); // Переключаем вкладку на аудит или рынки
       
-    } catch (error) {
-      console.error("Submit error:", error);
-      alert(`Submission failed: ${error.message}`);
-    } finally {
       setIsSubmitting(false);
-    }
+      onProjectCreated(); // Переключаем вкладку на страницу процесса аудита
+    }, 2500); // Крутим спиннер 2.5 секунды для красоты
   };
 
   return (
