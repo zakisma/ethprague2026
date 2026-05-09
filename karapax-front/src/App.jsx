@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ProjectBlock from './components/ProjectBlock';
 import About from './components/About';
 import Details from './components/Details';
+import VoteDetails from './components/VoteDetails'; 
 import CreateProject from './components/CreateProject';
 import AuditProcess from './components/AuditProcess';
 import AuthButton from './components/AuthButton';
@@ -11,6 +12,15 @@ import MyProjects from './components/MyProjects';
 
 // Моковые данные: Проекты -> Цели (Milestones)
 const mockProjects = [
+    { 
+    id: 'p4', 
+    name: "Buk Reservation System", 
+    reputation: "Unverified", // Tier пока не присвоен, так как проект еще не на рынке
+    website: "https://buk.technology",
+    description: "A decentralized hotel inventory distribution protocol. Community is currently voting to approve their roadmap and open prediction markets.",
+    isVoting: true, // ВАЖНО: этот флаг триггерит оранжевую карточку
+    milestones: [] // Майлстоуны пока пустые, так как рынки еще не открыты
+  },
   { 
     id: 'p1', 
     name: "Uniswap V4", 
@@ -42,7 +52,8 @@ const mockProjects = [
     milestones: [
       { id: 'm5', title: "Release Lens Appchain Public Testnet", yesPool: 25, noPool: 5, deadline: "Oct 15, 2026", kpiWeight: 100 }
     ]
-  }
+  },
+  // НОВЫЙ ПРОЕКТ СО СТАТУСОМ ГОЛОСОВАНИЯ
 ];
 
 function App() {
@@ -58,6 +69,11 @@ function App() {
     setSelectedMilestone(milestone);
     setActiveTab('details');
   };
+
+  const handleOpenVote = (project) => {
+  setSelectedProject(project);
+  setActiveTab('vote'); // Добавляем новый "таб"
+};
 
   const handleBackToHome = () => {
     setActiveTab('home');
@@ -251,6 +267,7 @@ function App() {
                   key={project.id} 
                   project={project} 
                   onOpenMilestone={handleOpenMilestone} 
+                  onOpenVote={handleOpenVote} // Передаем функцию открытия голосования
                 />
               ))}
             </div>
@@ -283,6 +300,12 @@ function App() {
         {activeTab === 'my_projects' && (
           <MyProjects onGetFunded={() => setActiveTab('create')} />
         )}
+        {activeTab === 'vote' && (
+  <VoteDetails 
+    project={selectedProject} 
+    onBack={() => setActiveTab('markets')} 
+  />
+)}
         {/* СТРАНИЦА: ДЕТАЛИ СТАВКИ */}
         {activeTab === 'details' && selectedProject && selectedMilestone && (
           <Details 
