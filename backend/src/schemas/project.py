@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.db.enums import ProjectStatus
@@ -38,5 +39,8 @@ class ProjectOut(BaseModel):
     github_repository: str
     description: str
     status: ProjectStatus
+    audit_response: dict[str, Any] | None = None
+    audited_at: datetime | None = None
+    audit_error: str | None = None
     created_at: datetime
     milestones: list[MilestoneOut] = Field(default_factory=list) # type: ignore

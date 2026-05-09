@@ -2,7 +2,8 @@ from sqlmodel import SQLModel, Field, Relationship
 from pydantic import EmailStr
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from sqlalchemy import Column, Enum
+from typing import Any
+from sqlalchemy import Column, Enum, JSON
 
 from src.db.enums import ProjectStatus, enum_values
 
@@ -54,6 +55,12 @@ class Project(SQLModel, table=True):
             nullable=False,
         ),
     )
+    audit_response: dict[str, Any] | None = Field(
+        default=None,
+        sa_column=Column(JSON, nullable=True),
+    )
+    audited_at: datetime | None = Field(default=None, nullable=True)
+    audit_error: str | None = Field(default=None, nullable=True)
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     

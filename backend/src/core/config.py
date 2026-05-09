@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     APP_DOMAIN: str
     APP_URI: str
     CHAIN_ID: int
-
+    DATA_AI_URI: str
+    
     model_config = SettingsConfigDict(env_file=".env")
 
 settings = Settings() # type: ignore
