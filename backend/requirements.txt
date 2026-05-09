@@ -1,0 +1,7 @@
+fastapi[standard]
+pydantic-settings
+sqlmodel
+psycopg[binary]
+PyJWT
+siwe
+web3
