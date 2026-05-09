@@ -3,7 +3,7 @@ from siwe import SiweMessage
 from siwe.siwe import ISO8601Datetime, VersionEnum
 from sqlmodel import Session, select, col
 from sqlalchemy import update
-from secrets import token_urlsafe
+from secrets import token_hex
 from fastapi import HTTPException, status
 from datetime import datetime, timedelta, timezone
 
@@ -20,7 +20,7 @@ def create_nonce(session: Session, data: NonceRequest) -> NonceResponse:
 
     wallet_address = Web3.to_checksum_address(data.wallet_address)
 
-    nonce = token_urlsafe(16)
+    nonce = token_hex(16)
     issued_at = datetime.now(timezone.utc)
     expires_at = issued_at + timedelta(minutes=5)
 
