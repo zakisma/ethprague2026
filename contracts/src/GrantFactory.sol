@@ -20,14 +20,12 @@ contract GrantFactory {
         treasury = _treasury;
     }
 
-    /// @notice AI Agent calls this to launch a new prediction market
     function createMarket(
         string calldata projectName,
-        string calldata marketDescription, // e.g., "General Fund", "TVL Target"
+        string calldata marketDescription,
         address developer,
         uint256 feeTarget,
         uint256 twlTarget,
-        // Передаем веса для этого конкретного рынка
         uint256 wDeploy,
         uint256 wFees,
         uint256 wTwl,
@@ -36,17 +34,15 @@ contract GrantFactory {
     ) external returns (address amm, address kpi) {
         require(msg.sender == aiPlatform, "Only AI Agent");
 
-        // create a new KPI Verifier for this market
+        // ФИКС: Передаем aiPlatform четвертым аргументом
         KPIVerifier newKPI = new KPIVerifier(
-            treasury, developer, address(0), 
-            100800, // duration
-            450,    // snapshot interval
+            treasury, developer, address(0), aiPlatform,
+            100800, 450, 
             feeTarget, twlTarget, 
-            0, 0, 2, // caller target, min balance, max missed pings,ignore calllers for anti-sybil
-            wDeploy, wFees, wTwl, wCallers, wLiveness // custom weights
+            0, 0, 2, 
+            wDeploy, wFees, wTwl, wCallers, wLiveness
         );
 
-        // 2. Создаем AMM и связываем с этим KPI
         AMMMarket newAMM = new AMMMarket(treasury, address(newKPI));
 
         emit MarketDeployed(projectName, address(newAMM), address(newKPI), marketDescription);
