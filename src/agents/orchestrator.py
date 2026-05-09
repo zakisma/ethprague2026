@@ -14,23 +14,30 @@ logger = logging.getLogger(__name__)
 
 
 def normalize_verdict(verdict: str) -> str:
-    return (verdict or "").strip().upper()
+    value = (verdict or "").strip().upper()
+
+    verdict_map = {
+        "REJECT": "REJECTED",
+        "REJECTED": "REJECTED",
+        "APPROVE": "APPROVED",
+        "APPROVED": "APPROVED",
+        "REVIEW": "NEEDS_REVIEW",
+        "MANUAL_REVIEW": "NEEDS_REVIEW",
+        "NEEDS_REVIEW": "NEEDS_REVIEW",
+    }
+
+    return verdict_map.get(value, value)
 
 
-def process_grant_application(app_data: GrantApplication) -> OrchestratorResponse:
+def process_grant_application_with_reputation(
+    app_data: GrantApplication,
+    reputation,
+) -> OrchestratorResponse:
     """
-    Agentic Orchestrator.
-
-    Routes grant applications based on the Sourcify wallet reputation verdict:
-    - REJECTED: no repository analysis, return lightweight AI rejection feedback.
-    - NEEDS_REVIEW: run GitHub + milestone + deep audit.
-    - APPROVED: no repository analysis, return trust profile and approval rationale.
+    Routes grant application using already received Sourcify reputation data.
+    Used when Sourcify audit arrives through a separate API endpoint.
     """
 
-    wallet = app_data.applicant_wallet_address
-    logger.info(f"Processing grant application for wallet={wallet}")
-
-    reputation = fetch_and_map_reputation(wallet)
     verdict = normalize_verdict(reputation.verdict)
 
     if verdict == "REJECTED":
