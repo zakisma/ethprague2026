@@ -1,0 +1,267 @@
+import React, { useState } from 'react';
+import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar, GitBranch, Coins, Loader2 } from 'lucide-react';
+
+const TOKEN_PRICE_USD = 2.50; 
+const TOKEN_SYMBOL = "$PROOF"; 
+
+export default function CreateProject({ onProjectCreated }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    website: '',
+    github: '', 
+    description: '',
+    reputation: 'Tier 3' 
+  });
+
+  const [milestones, setMilestones] = useState([
+    { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' } 
+  ]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const addMilestone = () => {
+    setMilestones([...milestones, { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' }]);
+  };
+
+  const removeMilestone = (id) => {
+    if (milestones.length > 1) {
+      setMilestones(milestones.filter(m => m.id !== id));
+    }
+  };
+
+  const handleMilestoneChange = (id, field, value) => {
+    setMilestones(milestones.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // 🥷 ДЛЯ ХАКАТОНА: Не блокируем форму, даже если нет токена!
+    // Просто ругаемся в консоль, но пропускаем дальше, чтобы демо не сломалось.
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.warn("Demo Mode: No access token found, but proceeding with simulation anyway.");
+    }
+
+    setIsSubmitting(true);
+
+    // СИМУЛЯЦИЯ: Задержка 2.5 секунды для имитации создания транзакции и проекта
+    setTimeout(() => {
+      // Считаем общий запрошенный бюджет
+      const totalGrant = milestones.reduce((sum, m) => sum + (Number(m.fundingAmount) || 0), 0);
+      
+      // Формируем готовый объект проекта
+      const newProject = {
+        id: 'p_new_' + Date.now(), 
+        name: formData.name,
+        reputation: 'Tier 3',
+        website: formData.website,
+        description: formData.description,
+        phase: "Audited",
+        grantPool: totalGrant,
+        deadline: milestones[milestones.length - 1]?.deadline || "TBA",
+        milestones: milestones.map((m, idx) => ({
+          id: `m_new_${Date.now()}_${idx}`,
+          title: m.title,
+          deadline: m.deadline,
+          desc: m.desc,
+          yesPool: 100, // Стартовая симулированная ликвидность
+          noPool: 100,  // Стартовая симулированная ликвидность
+        }))
+      };
+      
+      setIsSubmitting(false);
+      
+      // ПЕРЕДАЕМ СОЗДАННЫЙ ПРОЕКТ НАВЕРХ В APP.JSX (чтобы сработал переход на Audit)
+      onProjectCreated(newProject); 
+    }, 2500); 
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-black text-white mb-4">LAUNCH YOUR ROADMAP</h2>
+        <p className="text-gray-400">Define your goals, set on-chain KPIs, and let the market fund your vision.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-8 pb-20">
+        
+        {/* SECTION 1: Base Info */}
+        <div className="bg-[#111827] border border-gray-800 rounded-3xl p-8 space-y-6">
+          <h3 className="text-xl font-bold text-white flex items-center gap-2 border-b border-gray-800 pb-4">
+            <FileText className="text-emerald-400" /> Basic Information
+          </h3>
+          
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Project Name</label>
+            <input 
+              required
+              className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 px-4 text-white focus:border-emerald-500 outline-none transition"
+              placeholder="e.g. Uniswap V5"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Website URL</label>
+              <div className="relative">
+                <Globe className="absolute left-4 top-3.5 text-gray-600" size={18} />
+                <input 
+                  required
+                  type="url"
+                  className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-emerald-500 outline-none transition"
+                  placeholder="https://project.com"
+                  value={formData.website}
+                  onChange={(e) => setFormData({...formData, website: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-500 uppercase ml-1">GitHub Repository</label>
+              <div className="relative">
+                <GitBranch className="absolute left-4 top-3.5 text-gray-600" size={18} />
+                <input 
+                  required
+                  type="url"
+                  className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-emerald-500 outline-none transition"
+                  placeholder="https://github.com/your-org/repo"
+                  value={formData.github}
+                  onChange={(e) => setFormData({...formData, github: e.target.value})}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Description</label>
+            <textarea 
+              required
+              rows="3"
+              className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 px-4 text-white focus:border-emerald-500 outline-none transition"
+              placeholder="What are you building?"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+            />
+          </div>
+        </div>
+
+        {/* SECTION 2: Dynamic Roadmap */}
+        <div className="bg-[#111827] border border-gray-800 rounded-3xl p-8 space-y-6">
+          <div className="flex justify-between items-center border-b border-gray-800 pb-4">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <Target className="text-amber-400" /> Roadmap Milestones
+            </h3>
+            <button 
+              type="button"
+              onClick={addMilestone}
+              className="text-emerald-400 text-sm font-bold flex items-center gap-1 hover:text-emerald-300 transition"
+            >
+              <Plus size={16} /> Add Milestone
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {milestones.map((milestone, index) => (
+              <div key={milestone.id} className="relative p-6 bg-black/20 border border-gray-800 rounded-2xl space-y-4 group animate-in zoom-in-95 duration-300">
+                <div className="flex justify-between items-start">
+                  <span className="bg-gray-800 text-gray-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                    Milestone #{index + 1}
+                  </span>
+                  {milestones.length > 1 && (
+                    <button 
+                      type="button"
+                      onClick={() => removeMilestone(milestone.id)}
+                      className="text-gray-600 hover:text-rose-500 transition"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-600 uppercase">Goal Title</label>
+                    <input 
+                      required
+                      placeholder="e.g. Mainnet Launch"
+                      className="w-full bg-[#0a0f1c] border border-gray-800 rounded-lg py-2 px-3 text-white focus:border-amber-500 outline-none text-sm transition"
+                      value={milestone.title}
+                      onChange={(e) => handleMilestoneChange(milestone.id, 'title', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-600 uppercase">Verification Deadline</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-2.5 text-gray-700" size={14} />
+                      <input 
+                        required
+                        type="date"
+                        className="w-full bg-[#0a0f1c] border border-gray-800 rounded-lg py-2 pl-9 pr-3 text-white focus:border-amber-500 outline-none text-sm transition color-scheme-dark"
+                        value={milestone.deadline}
+                        onChange={(e) => handleMilestoneChange(milestone.id, 'deadline', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-600 uppercase">Funding Needed ({TOKEN_SYMBOL})</label>
+                    <div className="relative">
+                      <Coins className="absolute left-3 top-2.5 text-emerald-600" size={14} />
+                      <input 
+                        required
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder={`Amount in ${TOKEN_SYMBOL}`}
+                        className="w-full bg-[#0a0f1c] border border-gray-800 rounded-lg py-2 pl-9 pr-3 text-white focus:border-emerald-500 outline-none text-sm transition"
+                        value={milestone.fundingAmount}
+                        onChange={(e) => handleMilestoneChange(milestone.id, 'fundingAmount', e.target.value)}
+                      />
+                    </div>
+                    {milestone.fundingAmount > 0 && (
+                      <p className="text-[11px] text-emerald-400 font-mono ml-1 mt-1 font-semibold animate-in fade-in">
+                        ≈ ${(milestone.fundingAmount * TOKEN_PRICE_USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-600 uppercase">On-chain KPI Description</label>
+                  <input 
+                    required
+                    placeholder="e.g. Total volume > 1M ETH as verified by Etherscan"
+                    className="w-full bg-[#0a0f1c] border border-gray-800 rounded-lg py-2 px-3 text-white focus:border-amber-500 outline-none text-sm transition"
+                    value={milestone.desc}
+                    onChange={(e) => handleMilestoneChange(milestone.id, 'desc', e.target.value)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button 
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-5 rounded-2xl text-xl flex items-center justify-center gap-3 transition transform active:scale-[0.98] shadow-[0_0_30px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" size={24} /> INITIATING AI AUDIT...
+            </>
+          ) : (
+            <>
+              <Rocket size={24} /> LAUNCH PREDICTION MARKET
+            </>
+          )}
+        </button>
+
+      </form>
+    </div>
+  );
+}
