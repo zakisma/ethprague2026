@@ -163,36 +163,36 @@ Schema:
   "recommended_kpi": null or "Strict KPI",
   "milestone_assessments": [],
   "confidence": 0.0,
-  "contract_execution_plan": {
-          "should_create_market": true,
-          "contract_action": "create_market",
-          "market_creation_params": {
-          "projectName": "string",
-          "marketDescription": "string",
-          "developer": "0x...",
-          "feeTarget": "uint256 as string in wei",
-          "twlTarget": "uint256 as string in wei",
-          "wDeploy": 0,
-          "wFees": 0,
-          "wTwl": 0,
-          "wCallers": 0,
-          "wLiveness": 0
-     },
-     "kpi_verifier_config": {
-          "durationBlocks": 100800,
-          "snapshotInterval": 450,
-          "callerTarget": 0,
-          "minCallerBalance": "0",
-          "maxMissedPings": 2,
-          "grantContract": "0x0000000000000000000000000000000000000000"
-     },
-     "tranche_plan": {
-          "tranche1Amount": "string",
-          "tranche2Amount": "string",
-          "currency": "PROJECT_UNIT"
-     },
-     "notes": "string"
-     }
+  "contract_execution_plan": {{
+    "should_create_market": true,
+    "contract_action": "create_market",
+    "market_creation_params": {{
+      "projectName": "string",
+      "marketDescription": "string",
+      "developer": "0x...",
+      "feeTarget": "uint256 as string in wei",
+      "twlTarget": "uint256 as string in wei",
+      "wDeploy": 0,
+      "wFees": 0,
+      "wTwl": 0,
+      "wCallers": 0,
+      "wLiveness": 0
+    }},
+    "kpi_verifier_config": {{
+      "durationBlocks": 100800,
+      "snapshotInterval": 450,
+      "callerTarget": 0,
+      "minCallerBalance": "0",
+      "maxMissedPings": 2,
+      "grantContract": "0x0000000000000000000000000000000000000000"
+    }},
+    "tranche_plan": {{
+      "tranche1Amount": "string",
+      "tranche2Amount": "string",
+      "currency": "PROJECT_UNIT"
+    }},
+    "notes": "string"
+  }}
 }}
 
 CONTRACT PARAMETER GENERATION
