@@ -4,10 +4,9 @@ from src.schemas.responses import SourcifyAuditResult
 from src.tools.sourcify_tool import audit_developer
 
 def fetch_and_map_reputation(wallet_address: str) -> SourcifyAuditResult:
-    """Изолированная логика получения и валидации данных"""
-
     raw_data = audit_developer(wallet_address, verbose=False)
-    
+    return SourcifyAuditResult(**raw_data, raw_data=raw_data)
+
     # Мок (временно) # 
 #     raw_data = {
 #      "wallet": wallet_address,
@@ -25,4 +24,3 @@ def fetch_and_map_reputation(wallet_address: str) -> SourcifyAuditResult:
 #      }
     
     # Маппинг и валидация
-    return SourcifyAuditResult(**raw_data, raw_data=raw_data)

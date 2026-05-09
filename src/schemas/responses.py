@@ -1,33 +1,60 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Any, Dict, List, Optional
 
 
 class CriterionScore(BaseModel):
-    score: float
-    max: float
-    note: str
+    score: float = 0.0
+    max: float = 0.0
+    note: str = "Not provided"
 
 
 class BreakdownData(BaseModel):
-    has_any_verified: CriterionScore
-    verification_quality: CriterionScore
-    documentation: CriterionScore
-    activity_history: CriterionScore
-    complexity: CriterionScore
-    security: CriterionScore
+    has_any_verified: CriterionScore = Field(default_factory=CriterionScore)
+    verification_quality: CriterionScore = Field(default_factory=CriterionScore)
+    documentation: CriterionScore = Field(default_factory=CriterionScore)
+    activity_history: CriterionScore = Field(default_factory=CriterionScore)
+    complexity: CriterionScore = Field(default_factory=CriterionScore)
+    security: CriterionScore = Field(default_factory=CriterionScore)
 
 
 class SourcifyAuditResult(BaseModel):
     wallet: str
-    score: float
+    score: float = 0.0
     verdict: str
-    breakdown: BreakdownData
-    summary: List[str]
+    breakdown: BreakdownData = Field(default_factory=BreakdownData)
+    summary: List[str] = Field(default_factory=list)
 
     raw_data: Dict[str, Any] = Field(
         default_factory=dict,
         description="Keep the original raw response from Sourcify."
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_sourcify_payload(cls, data: Any):
+        if not isinstance(data, dict):
+            return data
+
+        # Sourcify/backend may send breakdown: {} for hard rejects.
+        if not data.get("breakdown"):
+            data["breakdown"] = {}
+
+        # Normalize verdict naming from backend.
+        verdict = str(data.get("verdict", "")).strip().upper()
+
+        verdict_map = {
+            "REJECT": "REJECTED",
+            "REJECTED": "REJECTED",
+            "APPROVE": "APPROVED",
+            "APPROVED": "APPROVED",
+            "NEEDS_REVIEW": "NEEDS_REVIEW",
+            "REVIEW": "NEEDS_REVIEW",
+            "MANUAL_REVIEW": "NEEDS_REVIEW",
+        }
+
+        data["verdict"] = verdict_map.get(verdict, verdict)
+
+        return data
 
 
 class MilestoneAuditResult(BaseModel):

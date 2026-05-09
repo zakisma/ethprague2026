@@ -1,44 +1,57 @@
 import logging
-from typing import Dict, Any
-from pydantic import BaseModel, Field
-from langchain.tools import tool
+from typing import Any, Dict
 
-from src.services.reputation_service import fetch_and_map_reputation
-
-logger = logging.getLogger("AI_Ops.SourcifyTool")
+logger = logging.getLogger(__name__)
 
 
-class SourcifyInput(BaseModel):
-    wallet_address: str = Field(..., description="Ethereum wallet address of the developer.")
-
-
-@tool("fetch_developer_reputation", args_schema=SourcifyInput)
-def fetch_developer_reputation(wallet_address: str) -> Dict[str, Any]:
+def audit_developer(wallet_address: str, verbose: bool = False) -> Dict[str, Any]:
     """
-    Fetches developer reputation from Sourcify and returns validated audit data.
+    Low-level Sourcify audit tool.
+
+    Returns raw reputation data.
+    Mapping to SourcifyAuditResult happens in reputation_service.py.
     """
-    logger.info(f"Executing Sourcify reputation check for wallet: {wallet_address}")
 
-    try:
-        result = fetch_and_map_reputation(wallet_address)
-        return result.model_dump()
+    logger.info(f"Executing Sourcify audit for wallet={wallet_address}")
 
-    except Exception as e:
-        logger.error(f"Sourcify reputation check failed: {e}")
-        return {
-    "wallet": wallet_address,
-    "score": 0.0,
-    "verdict": "ERROR",
-    "breakdown": {
-        "has_any_verified": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
-        "verification_quality": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
-        "documentation": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
-        "activity_history": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
-        "complexity": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
-        "security": {"score": 0.0, "max": 0.0, "note": "Sourcify check failed"},
+    return {
+        "wallet": wallet_address,
+        "score": 0.42,
+        "verdict": "NEEDS_REVIEW",
+        "breakdown": {
+            "has_any_verified": {
+                "score": 0.10,
+                "max": 0.15,
+                "note": "Mock: verified contracts exist."
             },
-            "summary": [f"Sourcify reputation check failed: {str(e)}"],
-            "raw_data": {
-                "error": str(e)
-            }
-        }
+            "verification_quality": {
+                "score": 0.08,
+                "max": 0.25,
+                "note": "Mock: partial verification quality."
+            },
+            "documentation": {
+                "score": 0.04,
+                "max": 0.10,
+                "note": "Mock: limited documentation."
+            },
+            "activity_history": {
+                "score": 0.08,
+                "max": 0.15,
+                "note": "Mock: some historical activity."
+            },
+            "complexity": {
+                "score": 0.06,
+                "max": 0.15,
+                "note": "Mock: beginner/intermediate contracts."
+            },
+            "security": {
+                "score": 0.06,
+                "max": 0.20,
+                "note": "Mock: limited security evidence."
+            },
+        },
+        "summary": [
+            "Mock Sourcify profile: 3 verified contracts.",
+            "Mock verdict: developer needs manual review."
+        ],
+    }
