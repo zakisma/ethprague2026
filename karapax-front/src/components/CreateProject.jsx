@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar, GitBranch, Coins } from 'lucide-react';
+import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar, GitBranch, Coins, Loader2 } from 'lucide-react';
 
 // Задай тут моковую цену вашего токена (например, 1 PRF = $2.50)
 const TOKEN_PRICE_USD = 2.50; 
@@ -18,6 +18,8 @@ export default function CreateProject({ onProjectCreated }) {
     { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' } 
   ]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const addMilestone = () => {
     setMilestones([...milestones, { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' }]);
   };
@@ -32,19 +34,57 @@ export default function CreateProject({ onProjectCreated }) {
     setMilestones(milestones.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newProject = {
-      ...formData,
+    
+    // Проверяем токен перед отправкой
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      alert("Error: You must verify your identity first!");
+      return;
+    }
+
+    // Собираем payload строго по схеме из FastAPI
+    const payload = {
+      title: formData.name,
+      website_url: formData.website,
+      github_repository: formData.github,
+      description: formData.description,
       milestones: milestones.map(m => ({
-        ...m,
-        fundingAmount: Number(m.fundingAmount), 
-        yesPool: 0,
-        noPool: 0
+        title: m.title,
+        deadline: m.deadline,
+        funding_needed_proof: Number(m.fundingAmount) || 0,
+        description: m.desc
       }))
     };
-    console.log("Submitting to FastAPI:", newProject);
-    onProjectCreated(); 
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('http://192.168.11.198:8000/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Передаем токен
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        throw new Error(JSON.stringify(errorData.detail || "Failed to create project"));
+      }
+
+      console.log("Successfully submitted to FastAPI!");
+      onProjectCreated(); // Переключаем вкладку на аудит или рынки
+      
+    } catch (error) {
+      console.error("Submit error:", error);
+      alert(`Submission failed: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -217,9 +257,18 @@ export default function CreateProject({ onProjectCreated }) {
 
         <button 
           type="submit"
-          className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-5 rounded-2xl text-xl flex items-center justify-center gap-3 transition transform active:scale-[0.98] shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+          disabled={isSubmitting}
+          className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-5 rounded-2xl text-xl flex items-center justify-center gap-3 transition transform active:scale-[0.98] shadow-[0_0_30px_rgba(16,185,129,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Rocket size={24} /> LAUNCH PREDICTION MARKET
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" size={24} /> INITIATING AI AUDIT...
+            </>
+          ) : (
+            <>
+              <Rocket size={24} /> LAUNCH PREDICTION MARKET
+            </>
+          )}
         </button>
 
       </form>
