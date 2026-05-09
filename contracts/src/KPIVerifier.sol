@@ -21,11 +21,16 @@ contract KPIVerifier {
     uint256 public constant SCORE_THRESHOLD = 70;
 
     // Weights (out of 100)
-    uint256 public constant W_DEPLOY    = 25; // KPI 1
-    uint256 public constant W_FEES      = 30; // KPI 2
-    uint256 public constant W_TWL       = 25; // KPI 3
-    uint256 public constant W_CALLERS   = 15; // KPI 4
-    uint256 public constant W_LIVENESS  =  5; // KPI 5
+    // uint256 public constant wDeploy    = 25; // KPI 1
+    // uint256 public constant wFees      = 30; // KPI 2
+    // uint256 public constant wTwl       = 25; // KPI 3
+    // uint256 public constant wCallers   = 15; // KPI 4
+    // uint256 public constant wLiveness  =  5; // KPI 5
+    uint256 public immutable wDeploy;
+    uint256 public immutable wFees;
+    uint256 public immutable wTwl;
+    uint256 public immutable wCallers;
+    uint256 public immutable wLiveness;
 
     // ─── KPI 1: VERIFIED MAINNET DEPLOY ─────────────────────────────────────
     // Set once by the platform after Sourcify confirmation off-chain.
@@ -70,6 +75,34 @@ contract KPIVerifier {
     event KPIResolved(uint256 score, bool passed);
 
     // ─── CONSTRUCTOR ─────────────────────────────────────────────────────────
+    // constructor(
+    //     address _treasury,
+    //     address _grantee,
+    //     address _grantContract,
+    //     uint256 _durationBlocks,       // e.g. 100800 ≈ 14 days on Arbitrum (1 block/8s)
+    //     uint256 _snapshotInterval,     // e.g. 450   ≈ 1 hour
+    //     uint256 _feeTarget,            // e.g. 0.05 ether
+    //     uint256 _twlTarget,            // e.g. 0.5 ether average locked
+    //     uint256 _callerTarget,         // e.g. 20
+    //     uint256 _minCallerBalance,     // e.g. 0.1 ether
+    //     uint256 _maxMissedPings        // e.g. 2
+    // ) {
+    //     platform          = msg.sender;
+    //     treasury          = _treasury;
+    //     grantee           = _grantee;
+    //     grantContract     = _grantContract;
+    //     startBlock        = block.number;
+    //     endBlock          = block.number + _durationBlocks;
+    //     snapshotInterval  = _snapshotInterval;
+    //     feeTarget         = _feeTarget;
+    //     twlTarget         = _twlTarget;
+    //     callerTarget      = _callerTarget;
+    //     minCallerBalance  = _minCallerBalance;
+    //     maxMissedPings    = _maxMissedPings;
+    //     lastSnapshotBlock = block.number;
+    //     lastPingBlock     = block.number;
+    // }
+
     constructor(
         address _treasury,
         address _grantee,
@@ -80,22 +113,34 @@ contract KPIVerifier {
         uint256 _twlTarget,            // e.g. 0.5 ether average locked
         uint256 _callerTarget,         // e.g. 20
         uint256 _minCallerBalance,     // e.g. 0.1 ether
-        uint256 _maxMissedPings        // e.g. 2
+        uint256 _maxMissedPings,        // e.g. 2
+        uint256 _wDeploy,
+        uint256 _wFees,
+        uint256 _wTwl,
+        uint256 _wCallers,
+        uint256 _wLiveness
     ) {
-        platform          = msg.sender;
-        treasury          = _treasury;
-        grantee           = _grantee;
-        grantContract     = _grantContract;
-        startBlock        = block.number;
-        endBlock          = block.number + _durationBlocks;
-        snapshotInterval  = _snapshotInterval;
-        feeTarget         = _feeTarget;
-        twlTarget         = _twlTarget;
-        callerTarget      = _callerTarget;
-        minCallerBalance  = _minCallerBalance;
-        maxMissedPings    = _maxMissedPings;
+        platform = msg.sender;
+        treasury = _treasury;
+        grantee = _grantee;
+        grantContract = _grantContract;
+        startBlock = block.number;
+        endBlock = block.number + _durationBlocks;
+        snapshotInterval = _snapshotInterval;
+        feeTarget = _feeTarget;
+        twlTarget = _twlTarget;
+        callerTarget = _callerTarget;
+        minCallerBalance = _minCallerBalance;
+        maxMissedPings = _maxMissedPings;
         lastSnapshotBlock = block.number;
-        lastPingBlock     = block.number;
+        lastPingBlock = block.number;
+        
+        // --- ЗАПИСЫВАЕМ ВЕСА ---
+        wDeploy = _wDeploy;
+        wFees = _wFees;
+        wTwl = _wTwl;
+        wCallers = _wCallers;
+        wLiveness = _wLiveness;
     }
 
     modifier onlyPlatform() {
@@ -165,35 +210,35 @@ contract KPIVerifier {
     /// @notice Returns current score out of 100. Pure on-chain.
     function currentScore() public view returns (uint256 score) {
         // KPI 1: Deploy verified (binary)
-        if (deployVerified) score += W_DEPLOY;
+        if (deployVerified) score += wDeploy;
 
         // KPI 2: Protocol fees in treasury (proportional, capped at weight)
         uint256 fees = treasury.balance;
         if (fees >= feeTarget) {
-            score += W_FEES;
+            score += wFees;
         } else if (feeTarget > 0) {
-            score += (fees * W_FEES) / feeTarget; // partial credit
+            score += (fees * wFees) / feeTarget; // partial credit
         }
 
         // KPI 3: Time-weighted locked value (proportional)
         if (snapshotCount > 0) {
             uint256 avgLocked = snapshotSum / snapshotCount;
             if (avgLocked >= twlTarget) {
-                score += W_TWL;
+                score += wTwl;
             } else if (twlTarget > 0) {
-                score += (avgLocked * W_TWL) / twlTarget; // partial credit
+                score += (avgLocked * wTwl) / twlTarget; // partial credit
             }
         }
 
         // KPI 4: Unique real callers (proportional)
         if (uniqueCallerCount >= callerTarget) {
-            score += W_CALLERS;
+            score += wCallers;
         } else if (callerTarget > 0) {
-            score += (uniqueCallerCount * W_CALLERS) / callerTarget; // partial credit
+            score += (uniqueCallerCount * wCallers) / callerTarget; // partial credit
         }
 
         // KPI 5: Liveness (binary)
-        if (livenessOk) score += W_LIVENESS;
+        if (livenessOk) score += wLiveness;
     }
 
     // ─── RESOLUTION ──────────────────────────────────────────────────────────
