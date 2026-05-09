@@ -230,3 +230,100 @@ look like in practice.
 All contracts, agent code, and API are open source.
 Working prototype deployed on Sepolia.
 Live ENS subdomain demo: `demo.prooffund.eth`
+
+
+## Why ProofFund Is Exactly What Umia Wants
+
+ProofFund is not a better grant dashboard.  
+It is a venture-grade funding primitive that fits directly into Umia’s thesis about
+agentic ventures, market-driven governance, and capital formation.[^umia]
+
+### A new problem space: earned reputation as a fundable primitive
+
+Most grant systems answer the question “who filled out the best form?”
+
+ProofFund answers a different question:
+
+> “Which developers have *earned* the right to be funded, based on
+> verifiable execution history and live delivery performance?”
+
+By treating earned reputation as the primary funding primitive, ProofFund
+moves beyond traditional grant applications, hackathon leaderboards, and
+static onchain badges. It redefines how developer reputation can be
+leveraged for capital allocation and venture formation.
+
+### Open ecosystem space, not “just another grants tool”
+
+There are tools for:
+- generic DAO grant management,
+- static reputation badges and scores,
+- prediction markets without reputation,
+- ENS naming without live state.
+
+None of them do all of the following in one coherent system:
+
+1. **AI‑enforced execution evidence** as a hard gate before any capital moves.
+2. **Market‑governed capital allocation**, where prediction markets decide
+   which developers should be funded.
+3. **Live ENS reputation state**, where an AI agent continually writes KPI
+   progress, trust scores, and tranche status into ENS Text Records for
+   a dedicated reputation subdomain.
+4. **Programmatic treasury release**, where milestone payouts are triggered
+   on-chain based on verified KPI delivery rather than human committees.
+
+Chaining all four layers together creates a new category of infrastructure
+for onchain reputation and funding, rather than competing with any single
+existing tool.
+
+### Deep alignment with Umia’s venture pipeline
+
+Umia is building a full pipeline from idea to onchain venture: decision‑market
+curation by UMIA holders, legal wrapper creation, treasury setup, and
+token‑enabled capital formation.[^umia-venture][^umia-about]
+
+ProofFund plugs into that pipeline at exactly the right points:
+
+- **Before Umia Venture:**  
+  ProofFund filters and upgrades the quality of teams that even reach
+  the venture-formation stage by requiring a successful AI audit +
+  market approval + delivered milestone.
+
+- **During capital formation:**  
+  The live ENS reputation record (`project.prooffund.eth`) gives Umia’s
+  Tailored Auction and decision markets an objective, machine‑readable
+  track record to underwrite token crowdfunding rounds.
+
+- **During venture execution:**  
+  The same AI agents and KPI logic that power ProofFund’s tranches can
+  be reused inside Umia‑formed ventures as an ongoing milestone and
+  accountability layer for treasuries governed by decision markets.
+
+In other words, ProofFund does not just “integrate with Umia” — it
+strengthens every critical step in Umia’s venture lifecycle:
+selection, funding, and post‑funding execution.
+
+### Why this is structurally hard to copy
+
+Because ProofFund is an end‑to‑end system, copying one surface feature
+is not enough:
+
+- Replicating the ENS integration without the AI audit produces a
+  cosmetic badge with no underwriting.
+- Copying the prediction market without the dynamic ENS record produces
+  a one‑off funding decision with no portable reputation.
+- Adding static reputation scores without programmatic tranches produces
+  dashboards that cannot actually move capital.
+
+The moat comes from the *composition* of all four layers and from being
+the first platform to make “earned reputation as a fundable primitive”
+real in production.
+
+---
+
+[^umia]: Umia positions itself as an infrastructure layer for launching
+agentic ventures and enabling market-driven capital formation.[web:706][web:713]
+
+[^umia-venture]: Umia Venture formalizes projects into legal wrappers and
+supports token-based crowdfunding and decision-market governance, which
+directly benefits from high‑quality, verifiable execution signals like
+those produced by ProofFund.[web:714][web:706]
