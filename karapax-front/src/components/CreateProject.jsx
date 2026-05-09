@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar } from 'lucide-react';
+import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar, GitBranch, Coins } from 'lucide-react';
+
+// Задай тут моковую цену вашего токена (например, 1 PRF = $2.50)
+const TOKEN_PRICE_USD = 2.50; 
+const TOKEN_SYMBOL = "$PROOF"; // Название вашего коина
 
 export default function CreateProject({ onProjectCreated }) {
   const [formData, setFormData] = useState({
     name: '',
     website: '',
+    github: '', 
     description: '',
-    reputation: 'Tier 3' // Default for new projects
+    reputation: 'Tier 3' 
   });
 
   const [milestones, setMilestones] = useState([
-    { id: Date.now(), title: '', deadline: '', desc: '' }
+    { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' } 
   ]);
 
   const addMilestone = () => {
-    setMilestones([...milestones, { id: Date.now(), title: '', deadline: '', desc: '' }]);
+    setMilestones([...milestones, { id: Date.now(), title: '', deadline: '', desc: '', fundingAmount: '' }]);
   };
 
   const removeMilestone = (id) => {
@@ -33,13 +38,13 @@ export default function CreateProject({ onProjectCreated }) {
       ...formData,
       milestones: milestones.map(m => ({
         ...m,
+        fundingAmount: Number(m.fundingAmount), 
         yesPool: 0,
         noPool: 0
       }))
     };
     console.log("Submitting to FastAPI:", newProject);
-    alert("Project and Roadmap sent to AI-Audit!");
-    onProjectCreated(); // Return to markets
+    onProjectCreated(); 
   };
 
   return (
@@ -57,23 +62,25 @@ export default function CreateProject({ onProjectCreated }) {
             <FileText className="text-emerald-400" /> Basic Information
           </h3>
           
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Project Name</label>
+            <input 
+              required
+              className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 px-4 text-white focus:border-emerald-500 outline-none transition"
+              placeholder="e.g. Uniswap V5"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Project Name</label>
-              <input 
-                required
-                className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 px-4 text-white focus:border-emerald-500 outline-none transition"
-                placeholder="e.g. Uniswap V5"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-              />
-            </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase ml-1">Website URL</label>
               <div className="relative">
                 <Globe className="absolute left-4 top-3.5 text-gray-600" size={18} />
                 <input 
                   required
+                  type="url"
                   className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-emerald-500 outline-none transition"
                   placeholder="https://project.com"
                   value={formData.website}
@@ -81,10 +88,25 @@ export default function CreateProject({ onProjectCreated }) {
                 />
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-500 uppercase ml-1">GitHub Repository</label>
+              <div className="relative">
+                <GitBranch className="absolute left-4 top-3.5 text-gray-600" size={18} />
+                <input 
+                  required
+                  type="url"
+                  className="w-full bg-black/40 border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white focus:border-emerald-500 outline-none transition"
+                  placeholder="https://github.com/your-org/repo"
+                  value={formData.github}
+                  onChange={(e) => setFormData({...formData, github: e.target.value})}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Short Description</label>
+            <label className="text-xs font-bold text-gray-500 uppercase ml-1">Description</label>
             <textarea 
               required
               rows="3"
@@ -129,7 +151,7 @@ export default function CreateProject({ onProjectCreated }) {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-600 uppercase">Goal Title</label>
                     <input 
@@ -140,6 +162,7 @@ export default function CreateProject({ onProjectCreated }) {
                       onChange={(e) => handleMilestoneChange(milestone.id, 'title', e.target.value)}
                     />
                   </div>
+                  
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-600 uppercase">Verification Deadline</label>
                     <div className="relative">
@@ -152,6 +175,28 @@ export default function CreateProject({ onProjectCreated }) {
                         onChange={(e) => handleMilestoneChange(milestone.id, 'deadline', e.target.value)}
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-600 uppercase">Funding Needed ({TOKEN_SYMBOL})</label>
+                    <div className="relative">
+                      <Coins className="absolute left-3 top-2.5 text-emerald-600" size={14} />
+                      <input 
+                        required
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder={`Amount in ${TOKEN_SYMBOL}`}
+                        className="w-full bg-[#0a0f1c] border border-gray-800 rounded-lg py-2 pl-9 pr-3 text-white focus:border-emerald-500 outline-none text-sm transition"
+                        value={milestone.fundingAmount}
+                        onChange={(e) => handleMilestoneChange(milestone.id, 'fundingAmount', e.target.value)}
+                      />
+                    </div>
+                    {milestone.fundingAmount > 0 && (
+                      <p className="text-[11px] text-emerald-400 font-mono ml-1 mt-1 font-semibold animate-in fade-in">
+                        ≈ ${(milestone.fundingAmount * TOKEN_PRICE_USD).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </p>
+                    )}
                   </div>
                 </div>
 
