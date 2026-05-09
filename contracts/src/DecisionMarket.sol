@@ -32,8 +32,6 @@ contract DecisionMarket {
         aiAgentAdmin = msg.sender;
     }
 
-    // 1. ИИ создает рынок, заливая начальную ликвидность (например, 0.01 ETH), 
-    // чтобы задать стартовую цену 50/50.
     function createMarket(uint256 marketId) external payable onlyAdmin {
         require(markets[marketId].poolYes == 0, "Market already exists");
         require(msg.value > 0, "Requires initial liquidity");
@@ -48,8 +46,6 @@ contract DecisionMarket {
         emit MarketCreated(marketId, msg.value);
     }
 
-    // 2. Функция для Фронтенда (View). Возвращает сколько Shares получит юзер.
-    // Математика CPAMM: x * y = k. 
     function simulateBuy(uint256 marketId, uint8 outcome, uint256 amountIn) public view returns (uint256 sharesOut, uint256 fee) {
         Market memory m = markets[marketId];
         require(m.status == 0, "Market not open");

@@ -4,66 +4,81 @@ pragma solidity ^0.8.19;
 import "forge-std/Test.sol";
 import "../src/DecisionMarket.sol";
 
-contract DecisionMarketTest is Test {
+contract DecisionMarketSeriousTest is Test {
     DecisionMarket public market;
-    
-    address public aiAgent = address(this); // Тестовый контракт выступает как AI
-    address public alice = address(0xA11CE);
-    address public bob = address(0xB0B);
+    address public aiAdmin = address(this);
+    address public hacker = address(0xBAD);
+    address public trader = address(0x600D);
 
     function setUp() public {
         market = new DecisionMarket();
+        vm.deal(hacker, 100 ether);
+        vm.deal(trader, 100 ether);
         
-        // Даем Алисе и Бобу тестовые ETH
-        vm.deal(alice, 10 ether);
-        vm.deal(bob, 10 ether);
+        // Создаем рынок ID 1 с ликвидностью 1 ETH
+        market.createMarket{value: 1 ether}(1);
     }
 
-    function testFullMarketLifecycle() public {
-        uint256 marketId = 1;
-
-        // 1. ИИ открывает рынок с начальной ликвидностью 0.1 ETH
-        market.createMarket{value: 0.1 ether}(marketId);
+    // ТЕСТ 1: Точная проверка математики комиссий (0.1%)
+    function testFeeMathAndBalances() public {
+        uint256 investAmount = 1 ether; // 10^18 wei
+        uint256 expectedFee = (investAmount * 1) / 1000; // 0.1% = 0.001 ETH
         
-        // 2. Фронтенд симулирует покупку для Алисы (ставит 1 ETH на YES)
-        (uint256 expectedSharesAlice, uint256 feeAlice) = market.simulateBuy(marketId, 1, 1 ether);
-        assertEq(feeAlice, 0.001 ether); // Проверяем 0.1% комиссии
+        vm.prank(trader);
+        market.buyShares{value: investAmount}(1, 1, 0); // Покупает YES
+        
+        // Проверяем, что контракт забрал ровно 0.001 ETH в копилку платформы
+        assertEq(market.collectedFees(1), expectedFee);
+        // Проверяем, что в пул YES ушло ровно 0.999 ETH
+// Распаковываем кортеж. Нам нужно только первое значение (poolYes), остальные пропускаем запятыми
+        (, uint256 poolNo, , ) = market.markets(1);
+        assertEq(poolNo, 1 ether + (investAmount - expectedFee));
+    }
 
-        // Алиса покупает токены YES (minSharesOut ставим на 99% от ожидаемого для проскальзывания)
-        vm.prank(alice);
-        market.buyShares{value: 1 ether}(marketId, 1, (expectedSharesAlice * 99) / 100);
+    // ТЕСТ 2: Защита от проскальзывания (Slippage Revert)
+    function testRevertOnSlippage() public {
+        // Трейдер ожидает получить 1000 shares
+        uint256 fakeExpectedShares = 1000 ether; 
+        
+        vm.prank(trader);
+        vm.expectRevert("Slippage tolerance exceeded");
+        // Передаем minSharesOut больше, чем АММ может выдать за 1 wei
+        market.buyShares{value: 1 wei}(1, 1, fakeExpectedShares);
+    }
 
-        // 3. Боб ставит 2 ETH на NO
-        (uint256 expectedSharesBob, ) = market.simulateBuy(marketId, 2, 2 ether);
-        vm.prank(bob);
-        market.buyShares{value: 2 ether}(marketId, 2, (expectedSharesBob * 99) / 100);
+    // ТЕСТ 3: Защита от покупки после дедлайна (Заморозка)
+    function testRevertBuyAfterFreeze() public {
+        // ИИ замораживает рынок (грант выдан)
+        market.freezeMarket(1);
 
-        // 4. Таймер истек. ИИ замораживает рынок (Грант выдан)
-        market.freezeMarket(marketId);
-
-        // Попытка Боба купить токены во время заморозки должна провалиться
-        vm.prank(bob);
+        vm.prank(hacker);
         vm.expectRevert("Market not open");
-        market.buyShares{value: 1 ether}(marketId, 2, 0);
+        // Хакер пытается влить деньги, чтобы перевесить результат
+        market.buyShares{value: 10 ether}(1, 1, 0);
+    }
 
-        // 5. Проходит 14 дней. Разработчик ВЫПОЛНИЛ KPI. ИИ разрешает рынок в пользу YES (1)
-        market.resolveMarket(marketId, 1);
+    // ТЕСТ 4: Защита от преждевременного снятия выигрыша и двойного снятия
+    function testRevertClaimBeforeResolveAndDoubleClaim() public {
+        vm.prank(trader);
+        market.buyShares{value: 5 ether}(1, 1, 0); // Трейдер покупает YES
 
-        // 6. Алиса забирает выигрыш.
-        uint256 aliceBalanceBefore = alice.balance;
-        
-        vm.prank(alice);
-        market.claimWinnings(marketId);
-        
-        uint256 aliceBalanceAfter = alice.balance;
-        
-        // Алиса заработала больше, чем вложила, забрав деньги пула!
-        assertTrue(aliceBalanceAfter > aliceBalanceBefore);
-        console.log("Alice Profit (Wei):", aliceBalanceAfter - aliceBalanceBefore);
+        // 1. Попытка забрать деньги ДО решения ИИ
+        vm.prank(trader);
+        vm.expectRevert("Market not resolved");
+        market.claimWinnings(1);
 
-        // 7. Попытка Боба забрать выигрыш должна провалиться (он ставил на NO)
-        vm.prank(bob);
+        // ИИ выносит вердикт: YES победил
+        market.resolveMarket(1, 1);
+
+        // 2. Трейдер успешно забирает деньги
+        uint256 balanceBefore = trader.balance;
+        vm.prank(trader);
+        market.claimWinnings(1);
+        assertTrue(trader.balance > balanceBefore); // Деньги пришли
+
+        // 3. Попытка забрать деньги второй раз (Reentrancy/Double spend защита)
+        vm.prank(trader);
         vm.expectRevert("No winning shares");
-        market.claimWinnings(marketId);
+        market.claimWinnings(1);
     }
 }
