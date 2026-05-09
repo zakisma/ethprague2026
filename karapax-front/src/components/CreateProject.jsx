@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Rocket, Globe, FileText, Target, Calendar, GitBranch, Coins, Loader2 } from 'lucide-react';
 
-// Задай тут моковую цену вашего токена (например, 1 PRF = $2.50)
 const TOKEN_PRICE_USD = 2.50; 
-const TOKEN_SYMBOL = "$PROOF"; // Название вашего коина
+const TOKEN_SYMBOL = "$PROOF"; 
 
 export default function CreateProject({ onProjectCreated }) {
   const [formData, setFormData] = useState({
@@ -37,25 +36,45 @@ export default function CreateProject({ onProjectCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Проверяем токен перед отправкой (оставляем для реалистичности флоу)
+    // 🥷 ДЛЯ ХАКАТОНА: Не блокируем форму, даже если нет токена!
+    // Просто ругаемся в консоль, но пропускаем дальше, чтобы демо не сломалось.
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("Error: You must verify your identity first!");
-      return;
+      console.warn("Demo Mode: No access token found, but proceeding with simulation anyway.");
     }
 
     setIsSubmitting(true);
 
-    // СИМУЛЯЦИЯ: Имитируем запрос на бэкенд и работу AI-аудита
+    // СИМУЛЯЦИЯ: Задержка 2.5 секунды для имитации создания транзакции и проекта
     setTimeout(() => {
-      console.log("Simulated API Success! Data would have been:", {
-        ...formData,
-        milestones
-      });
+      // Считаем общий запрошенный бюджет
+      const totalGrant = milestones.reduce((sum, m) => sum + (Number(m.fundingAmount) || 0), 0);
+      
+      // Формируем готовый объект проекта
+      const newProject = {
+        id: 'p_new_' + Date.now(), 
+        name: formData.name,
+        reputation: 'Tier 3',
+        website: formData.website,
+        description: formData.description,
+        phase: "Audited",
+        grantPool: totalGrant,
+        deadline: milestones[milestones.length - 1]?.deadline || "TBA",
+        milestones: milestones.map((m, idx) => ({
+          id: `m_new_${Date.now()}_${idx}`,
+          title: m.title,
+          deadline: m.deadline,
+          desc: m.desc,
+          yesPool: 100, // Стартовая симулированная ликвидность
+          noPool: 100,  // Стартовая симулированная ликвидность
+        }))
+      };
       
       setIsSubmitting(false);
-      onProjectCreated(); // Переключаем вкладку на страницу процесса аудита
-    }, 2500); // Крутим спиннер 2.5 секунды для красоты
+      
+      // ПЕРЕДАЕМ СОЗДАННЫЙ ПРОЕКТ НАВЕРХ В APP.JSX (чтобы сработал переход на Audit)
+      onProjectCreated(newProject); 
+    }, 2500); 
   };
 
   return (

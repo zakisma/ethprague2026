@@ -262,7 +262,17 @@ function App() {
 
         {/* СТРАНИЦА: ФОРМА СОЗДАНИЯ */}
         {activeTab === 'create' && (
-          <CreateProject onProjectCreated={() => setActiveTab('audit')} /> 
+          <CreateProject onProjectCreated={(newProject) => {
+            
+            // 🥷 ТОТ САМЫЙ ХАК: Запихиваем новый проект самым первым в твой список mockProjects!
+            if (newProject) {
+              mockProjects.unshift(newProject);
+            }
+            
+            // И переключаем вкладку дальше
+            setActiveTab('audit');
+            
+          }} /> 
         )}
 
         {/* СТРАНИЦА: ПРОЦЕСС АУДИТА */}
