@@ -2,6 +2,7 @@ import os
 import ast
 import subprocess
 import tempfile
+from urllib import response
 import requests
 import logging
 from datetime import datetime
@@ -137,7 +138,19 @@ def analyze_github_repo(repo_url: str) -> dict:
 
     # GitHub metadata
     try:
-        response = requests.get(api_url, timeout=10)
+        headers = {
+               "Accept": "application/vnd.github+json",
+               "User-Agent": "agentic-grant-auditor"
+               }
+        github_token = os.getenv("GITHUB_TOKEN")
+        if github_token:
+            headers["Authorization"] = f"Bearer {github_token}"
+        response = requests.get(api_url, headers=headers, timeout=10)
+        if response.status_code == 403:
+          logger.warning(
+               "GitHub API returned 403. Likely rate limited or missing GITHUB_TOKEN."
+          )
+        response = requests.get(api_url, headers=headers, timeout=10)
         if response.status_code == 200:
             data = response.json()
             result["stars"] = data.get("stargazers_count", 0)
