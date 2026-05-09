@@ -10,7 +10,7 @@ export default function AuthButton() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Укажи здесь порт, на котором крутится твой FastAPI (обычно 8000)
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = "http://192.168.11.198:8000";
 
   // При загрузке проверяем, есть ли уже сохраненный токен
   useEffect(() => {
@@ -18,12 +18,17 @@ export default function AuthButton() {
     if (token) setIsAuthenticated(true);
   }, []);
 
+
   const handleLogin = async () => {
     if (!address) return;
     setIsLoading(true);
 
+    // ВАЖНО: Убедись, что этот IP совпадает с тем, где реально запущен бэкенд!
+    // Если бэкенд на 192.168.11.198, то напиши его тут вместо localhost
+    const API_BASE = "http://192.168.11.198:8000"; 
+
     try {
-      // 1. ЗАПРОС NONCE: Отправляем wallet_address, чтобы получить сообщение для подписи
+      // 1. Получаем Nonce
       const nonceRes = await fetch(`${API_BASE}/auth/nonce`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,10 +38,13 @@ export default function AuthButton() {
       if (!nonceRes.ok) throw new Error("Не удалось получить nonce от сервера");
       const { message } = await nonceRes.json();
 
-      // 2. ПОДПИСЬ В METAMASK: Вызываем кошелек пользователя
-      const signature = await signMessageAsync({ message });
+      console.log("1. Получено сообщение от бэкенда:", message);
 
-      // 3. ВЕРИФИКАЦИЯ: Отправляем исходное сообщение и полученную подпись
+      // 2. Подписываем
+      const signature = await signMessageAsync({ message });
+      console.log("2. Подпись успешно создана:", signature);
+
+      // 3. Отправляем на верификацию
       const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,19 +54,23 @@ export default function AuthButton() {
         })
       });
 
-      if (!verifyRes.ok) throw new Error("Верификация подписи не удалась");
+      // ЕСЛИ БЭКЕНД ОТВЕТИЛ ОШИБКОЙ (400, 422, 500)
+      if (!verifyRes.ok) {
+        const errorData = await verifyRes.json();
+        console.error("❌ Ошибка от FastAPI:", errorData);
+        // Выводим точную причину на экран
+        throw new Error(JSON.stringify(errorData.detail || errorData)); 
+      }
       
-      // Достаем JWT токен из ответа
+      // 4. Успех!
       const { access_token } = await verifyRes.json();
-
-      // 4. СОХРАНЕНИЕ: Прячем токен в браузер и меняем интерфейс
       localStorage.setItem('access_token', access_token);
       setIsAuthenticated(true);
-      console.log("Успешная авторизация! Токен сохранен.");
+      console.log("✅ Успешная авторизация! Токен сохранен.");
 
     } catch (error) {
       console.error("Ошибка авторизации:", error);
-      alert("Ошибка входа. Проверь, запущен ли бэкенд на порту 8000 и нет ли ошибок CORS.");
+      alert(`Ошибка верификации:\n\n${error.message}`);
     } finally {
       setIsLoading(false);
     }
