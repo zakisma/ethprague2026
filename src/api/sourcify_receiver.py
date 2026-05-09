@@ -5,6 +5,7 @@ from src.schemas.responses import SourcifyAuditResult
 from src.services.application_store import (
     save_sourcify_audit,
     get_application,
+    save_result,
 )
 from src.agents.orchestrator import process_grant_application_with_reputation
 
@@ -16,10 +17,10 @@ router = APIRouter(prefix="/sourcify", tags=["Sourcify"])
 @router.post("/audit")
 def receive_sourcify_audit(audit_data: SourcifyAuditResult):
     try:
-        wallet = audit_data.wallet.lower()
+        wallet = audit_data.wallet
 
         logger.info(
-            f"Received Sourcify audit for wallet={audit_data.wallet}, "
+            f"Received Sourcify audit for wallet={wallet}, "
             f"score={audit_data.score}, verdict={audit_data.verdict}"
         )
 
@@ -31,10 +32,12 @@ def receive_sourcify_audit(audit_data: SourcifyAuditResult):
             return {
                 "status": "waiting_for_application",
                 "message": "Sourcify audit received. Waiting for project application.",
-                "wallet": audit_data.wallet,
+                "wallet": wallet,
                 "score": audit_data.score,
                 "verdict": audit_data.verdict,
                 "summary": audit_data.summary,
+                "missing": ["application"],
+                "received": ["sourcify_audit"],
             }
 
         result = process_grant_application_with_reputation(
@@ -42,13 +45,17 @@ def receive_sourcify_audit(audit_data: SourcifyAuditResult):
             reputation=audit_data,
         )
 
+        save_result(wallet, result)
+
         return {
             "status": "processed",
             "message": "Sourcify audit and application were merged and processed.",
-            "wallet": audit_data.wallet,
+            "wallet": wallet,
             "score": audit_data.score,
             "verdict": audit_data.verdict,
             "summary": audit_data.summary,
+            "missing": [],
+            "received": ["application", "sourcify_audit"],
             "result": result.model_dump(),
         }
 

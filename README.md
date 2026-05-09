@@ -52,8 +52,8 @@ The deep audit is designed to answer:
 
 What is implemented today:
 
-- FastAPI service with two inbound endpoints
-- in-memory application and Sourcify audit store
+- FastAPI service with intake and result retrieval endpoints
+- in-memory application, Sourcify audit, and processed result store
 - GitHub metadata fetch, README fetch, and lightweight repo code-map generation
 - LLM-based milestone review
 - LLM-based deep audit for market readiness
@@ -93,6 +93,8 @@ normalize verdict
 REJECTED     -> reputation rejection response
 APPROVED     -> trust profile response
 NEEDS_REVIEW -> GitHub analysis -> milestone analysis -> deep audit
+        ↓
+store orchestrator result by wallet
 ```
 
 ## API Endpoints
@@ -103,7 +105,7 @@ Receives a grant application payload.
 
 If the matching Sourcify audit has not arrived yet, the service stores the application and returns `waiting_for_sourcify`.
 
-If the matching Sourcify audit already exists, the service processes the application immediately and returns `processed`.
+If the matching Sourcify audit already exists, the service processes the application immediately, stores the final orchestrator result, and returns `processed`.
 
 Example request:
 
@@ -138,7 +140,7 @@ Receives a Sourcify reputation audit for a wallet.
 
 If the matching grant application has not arrived yet, the service stores the audit and returns `waiting_for_application`.
 
-If the matching application already exists, the service processes the pair immediately and returns `processed`.
+If the matching application already exists, the service processes the pair immediately, stores the final orchestrator result, and returns `processed`.
 
 Example request:
 
@@ -162,6 +164,31 @@ Example request:
 }
 ```
 
+### `GET /results/{wallet}`
+
+Fetches the latest processed orchestrator result for a wallet.
+
+This endpoint is useful when the application and Sourcify audit were submitted asynchronously and the client wants to retrieve the final merged decision later.
+
+If no processed result exists yet, the endpoint returns `404`.
+
+Example response:
+
+```json
+{
+  "status": "found",
+  "wallet": "0x1234567890abcdef1234567890abcdef12345678",
+  "result": {
+    "status": "rejected",
+    "message": "Deep audit finished.",
+    "ai_audit_data": {
+      "final_status": "rejected",
+      "market_readiness": false
+    }
+  }
+}
+```
+
 ### `GET /health`
 
 Simple health check:
@@ -173,6 +200,13 @@ Simple health check:
 ## Response Paths
 
 The service does not always return the same kind of audit payload. The response depends on the reputation verdict.
+
+At the HTTP layer, the intake endpoints now also expose synchronization hints:
+
+- `status`: whether the request is waiting or processed
+- `missing`: which companion payload has not arrived yet
+- `received`: which payloads are already present for the wallet
+- `result`: the saved orchestrator output, included only once processing is complete
 
 ### 1. Reputation rejection
 
@@ -273,6 +307,7 @@ Once the server is running, open:
 
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/health`
+- `http://127.0.0.1:8000/results/{wallet}`
 
 ## Design Notes
 
@@ -292,7 +327,7 @@ That separation keeps the MVP easier to reason about and cheaper to run:
 ## Known Limitations
 
 - `src/tools/sourcify_tool.py` is still mocked
-- `src/services/application_store.py` is in-memory only
+- `src/services/application_store.py` is in-memory only, so saved applications, audits, and results are lost on restart
 - output schemas differ between reputation-only and deep-audit paths
 - the deep audit response is still somewhat overloaded for direct frontend display
 - GitHub analysis depends on external network access and repository clone success

@@ -5,6 +5,7 @@ from src.schemas.requests import GrantApplication
 from src.services.application_store import (
     save_application,
     get_sourcify_audit,
+    save_result,
 )
 from src.agents.orchestrator import process_grant_application_with_reputation
 
@@ -15,7 +16,9 @@ router = APIRouter(prefix="/applications", tags=["Applications"])
 
 @router.post("")
 def receive_application(app_data: GrantApplication):
-    wallet = app_data.applicant_wallet_address.lower()
+    wallet = app_data.applicant_wallet_address
+
+    logger.info(f"Received application for wallet={wallet}")
 
     save_application(app_data)
 
@@ -25,7 +28,9 @@ def receive_application(app_data: GrantApplication):
         return {
             "status": "waiting_for_sourcify",
             "message": "Application received. Waiting for Sourcify audit.",
-            "wallet": app_data.applicant_wallet_address,
+            "wallet": wallet,
+            "missing": ["sourcify_audit"],
+            "received": ["application"],
         }
 
     result = process_grant_application_with_reputation(
@@ -33,9 +38,13 @@ def receive_application(app_data: GrantApplication):
         reputation=sourcify_audit,
     )
 
+    save_result(wallet, result)
+
     return {
         "status": "processed",
         "message": "Application and Sourcify audit were merged and processed.",
-        "wallet": app_data.applicant_wallet_address,
+        "wallet": wallet,
+        "missing": [],
+        "received": ["application", "sourcify_audit"],
         "result": result.model_dump(),
     }
