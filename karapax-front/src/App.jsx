@@ -124,11 +124,18 @@ function App() {
 
       {/* --- НАВИГАЦИЯ --- */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-gray-800 sticky top-0 bg-[#0a0f1c]/90 backdrop-blur-md z-50">
+{/* Логотип */}
         <div className="flex items-center gap-3 cursor-pointer group" onClick={handleBackToHome}>
-          <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/30 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-xl shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-105 transition-transform">
-            🛡️
+          <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img 
+              src="/prooffund.png" 
+              alt="ProofFund Logo" 
+              className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
+            />
           </div>
-          <span className="text-xl font-bold tracking-widest text-white group-hover:text-emerald-400 transition-colors">ProofFund</span>
+          <span className="text-xl font-bold tracking-widest text-white group-hover:text-emerald-400 transition-colors">
+            ProofFund
+          </span>
         </div>
         
         <div className="hidden md:flex gap-8 text-sm font-medium">
