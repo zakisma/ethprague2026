@@ -1,4 +1,4 @@
-# ProofFund
+# Hackathon project - ProofFund
 
 ProofFund is the first onchain grant market where capital flows only to
 developers with verifiable execution history — enforced by AI and governed
